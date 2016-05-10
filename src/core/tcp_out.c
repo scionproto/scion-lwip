@@ -54,6 +54,9 @@
 #if LWIP_TCP_TIMESTAMPS
 #include "lwip/sys.h"
 #endif
+#if SCION
+#include "lwip/scion.h"
+#endif
 
 #include <string.h>
 
@@ -875,7 +878,11 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
         IP_PROTO_TCP, p->tot_len);
 #endif
-#if LWIP_NETIF_HWADDRHINT
+
+#if SCION
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
+      IP_PROTO_TCP);
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
@@ -1094,6 +1101,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* If we don't have a local IP address, we get one by
      calling ip_route(). */
+#if !SCION
   if (ip_addr_isany(&(pcb->local_ip))) {
     netif = ip_route(&(pcb->remote_ip));
     if (netif == NULL) {
@@ -1101,6 +1109,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     }
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
+#endif
 
   if (pcb->rttest == 0) {
     pcb->rttest = tcp_ticks;
@@ -1162,7 +1171,10 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 #endif /* CHECKSUM_GEN_TCP */
   TCP_STATS_INC(tcp.xmit);
 
-#if LWIP_NETIF_HWADDRHINT
+#if SCION
+  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
+      IP_PROTO_TCP);
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
@@ -1223,7 +1235,11 @@ tcp_rst(u32_t seqno, u32_t ackno,
   TCP_STATS_INC(tcp.xmit);
   snmp_inc_tcpoutrsts();
    /* Send output with hardcoded TTL since we have no access to the pcb */
+#if SCION
+  scion_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
+#else
   ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
+#endif
   pbuf_free(p);
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %"U32_F" ackno %"U32_F".\n", seqno, ackno));
 }
@@ -1388,7 +1404,9 @@ tcp_keepalive(struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
   /* Send output to IP */
-#if LWIP_NETIF_HWADDRHINT
+#if SCION
+  scion_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
@@ -1468,8 +1486,10 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 #endif
   TCP_STATS_INC(tcp.xmit);
 
+#if SCION
+  scion_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
   /* Send output to IP */
-#if LWIP_NETIF_HWADDRHINT
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/

@@ -142,6 +142,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   }
 #endif
 
+
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */
   hdrlen = TCPH_HDRLEN(tcphdr);

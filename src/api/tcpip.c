@@ -46,6 +46,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/tcpip.h"
 #include "lwip/init.h"
+#include "lwip/scion.h"
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
 
@@ -104,7 +105,11 @@ tcpip_thread(void *arg)
       } else
 #endif /* LWIP_ETHERNET */
       {
+#if SCION
+        scion_input(msg->msg.inp.p, msg->msg.inp.netif);
+#else
         ip_input(msg->msg.inp.p, msg->msg.inp.netif);
+#endif
       }
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;

@@ -698,6 +698,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   }
   pcb->remote_port = port;
 
+#if !SCION
   /* check if we have a route to the remote host */
   if (ip_addr_isany(&(pcb->local_ip))) {
     /* no local IP address set, yet. */
@@ -710,6 +711,9 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     /* Use the netif's IP address as local address. */
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
+#else
+    IP4_ADDR(&(pcb->local_ip), 127,0,0,1);
+#endif
 
   old_local_port = pcb->local_port;
   if (pcb->local_port == 0) {
@@ -1587,10 +1591,14 @@ tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr)
 {
   u16_t mss_s;
   struct netif *outif;
-
+#if !SCION
   outif = ip_route(addr);
   if ((outif != NULL) && (outif->mtu != 0)) {
     mss_s = outif->mtu - IP_HLEN - TCP_HLEN;
+#else
+    {
+    mss_s = 1500 - IP_HLEN - TCP_HLEN;
+#endif
     /* RFC 1122, chap 4.2.2.6:
      * Eff.snd.MSS = min(SendMSS+20, MMS_S) - TCPhdrsize - IPoptionsize
      * We correct for TCP options in tcp_write(), and don't support IP options.
