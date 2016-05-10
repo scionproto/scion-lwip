@@ -88,7 +88,7 @@ void scion_l3_input(u8_t *buf, int len){
 
     struct netif netif = mk_netif();
     tcpip_input(p, &netif);
-    /* pbuf_free(p); */
+    /* pbuf_free(p); */ //FIXME(PSz): doublecheck if TCP processing releases it
 }
 
 void scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
