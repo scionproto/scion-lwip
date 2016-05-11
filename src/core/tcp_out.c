@@ -56,7 +56,8 @@
 #endif
 #if SCION
 #include "lwip/scion.h"
-#endif
+#define ip_output(a, b, c, d, e, f) scion_output(a, b, c, d, e, f)
+#endif /* SCION */
 
 #include <string.h>
 
@@ -879,10 +880,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
         IP_PROTO_TCP, p->tot_len);
 #endif
 
-#if SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
-      IP_PROTO_TCP);
-#elif LWIP_NETIF_HWADDRHINT
+#if LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
@@ -1171,10 +1169,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 #endif /* CHECKSUM_GEN_TCP */
   TCP_STATS_INC(tcp.xmit);
 
-#if SCION
-  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
-      IP_PROTO_TCP);
-#elif LWIP_NETIF_HWADDRHINT
+#if LWIP_NETIF_HWADDRHINT
   ip_output_hinted(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
@@ -1235,11 +1230,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   TCP_STATS_INC(tcp.xmit);
   snmp_inc_tcpoutrsts();
    /* Send output with hardcoded TTL since we have no access to the pcb */
-#if SCION
-  scion_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
-#else
   ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
-#endif
   pbuf_free(p);
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %"U32_F" ackno %"U32_F".\n", seqno, ackno));
 }
@@ -1404,9 +1395,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
   /* Send output to IP */
-#if SCION
-  scion_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
-#elif LWIP_NETIF_HWADDRHINT
+#if LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
@@ -1486,10 +1475,8 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 #endif
   TCP_STATS_INC(tcp.xmit);
 
-#if SCION
-  scion_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
   /* Send output to IP */
-#elif LWIP_NETIF_HWADDRHINT
+#if LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
