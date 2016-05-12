@@ -192,10 +192,6 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
 #define ip_current_netif()  (current_netif)
-/** Get the IP header of the current packet.
- * This function must only be called from a receive callback (udp_recv,
- * raw_recv, tcp_accept). It will return NULL otherwise. */
-#define ip_current_header() (current_header)
 /** Source IP address of current_header */
 #define ip_current_src_addr()  (&current_iphdr_src)
 /** Destination IP address of current_header */

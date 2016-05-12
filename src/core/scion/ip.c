@@ -55,27 +55,21 @@
 #include "arch/perf.h"
 #include "lwip/tcpip.h"
 
-#include <string.h>
-
 /**
  * The interface that provided the packet for the current callback
  * invocation.
  */
 struct netif *current_netif;
 
-/**
- * Header of the input packet currently being processed.
- */
-const struct ip_hdr *current_header;
 /** Source IP address of current_header */
 ip_addr_t current_iphdr_src;
 /** Destination IP address of current_header */
 ip_addr_t current_iphdr_dest;
 
 /** The IP header ID of the next outgoing IP packet */
-static u16_t ip_id;
 
 /////////////////////////////////////////////////////
+
 void print_hex(char *buf, int len){
     int i;
     for (i=0; i<len; i++)
@@ -125,38 +119,11 @@ err_t add_ip_header(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     ip_debug_print(p);
 }
 
-
-/* FIXME(PSz): Taken from netif.c */
-static err_t
-netif_loopif_init(struct netif *netif)
-{
-  /* initialize the snmp variables and counters inside the struct netif
-   * ifSpeed: no assumption can be made!
-   */
-  NETIF_INIT_SNMP(netif, snmp_ifType_softwareLoopback, 0);
-
-  netif->name[0] = 'l';
-  netif->name[1] = 'o';
-  netif->output = netif_loop_output;
-  return ERR_OK;
-}
-
-struct netif mk_netif(){
-    struct netif netif;
-    ip_addr_t ipaddr, netmask, gateway;
-    IP4_ADDR(&gateway, 127,0,0,1);
-    IP4_ADDR(&ipaddr, 127,0,0,1);
-    IP4_ADDR(&netmask, 255,255,255,0);
-    netif_add(&netif, &ipaddr, &netmask, &gateway, NULL, netif_loopif_init, tcpip_input);
-    return netif;
-}
-
 void scion_l3_input(u8_t *buf, int len){
     struct pbuf *p = pbuf_alloc(PBUF_IP, len, PBUF_RAM);
     MEMCPY(p->payload, buf, len);
 
-    struct netif netif = mk_netif();
-    tcpip_input(p, &netif);
+    tcpip_input(p, (struct netif *)NULL);
     /* pbuf_free(p); */ //FIXME(PSz): doublecheck if TCP processing releases it
 }
 /////////////////////////////////////////////////////////////////////////
@@ -201,8 +168,7 @@ ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
     u32_t daddr = *(u32_t *)dst;
 
     fprintf(stderr, "PSz: scion_output() called");
-    struct netif netif = mk_netif();
-    add_ip_header(p, src, dst, ttl, tos, proto, &netif, NULL, 0); // For now, debug reasons.
+    add_ip_header(p, src, dst, ttl, tos, proto, (struct netif*)NULL, NULL, 0); // For now, debug reasons.
     fprintf(stderr, "PSz: sending %lu->%lu (%dB):\n", saddr, daddr, p->len);
     print_hex((char *)p->payload, p->len);
     fprintf(stderr, "\n\n");

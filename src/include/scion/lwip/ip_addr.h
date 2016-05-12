@@ -64,22 +64,6 @@ PACK_STRUCT_END
 typedef struct ip_addr ip_addr_t;
 typedef struct ip_addr_packed ip_addr_p_t;
 
-/*
- * struct ipaddr2 is used in the definition of the ARP packet format in
- * order to support compilers that don't have structure packing.
- */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ip_addr2 {
-  PACK_STRUCT_FIELD(u16_t addrw[2]);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
 /* Forward declaration to not include netif.h */
 struct netif;
 
@@ -121,13 +105,6 @@ extern const ip_addr_t ip_addr_broadcast;
                          ((u32_t)((c) & 0xff) << 16) | \
                          ((u32_t)((b) & 0xff) << 8)  | \
                           (u32_t)((a) & 0xff)
-#endif
-
-/** MEMCPY-like copying of IP addresses where addresses are known to be
- * 16-bit-aligned if the port is correctly configured (so a port could define
- * this to copying 2 u16_t's) - no NULL-pointer-checking needed. */
-#ifndef IPADDR2_COPY
-#define IPADDR2_COPY(dest, src) SMEMCPY(dest, src, sizeof(ip_addr_t))
 #endif
 
 /** Copy IP address - faster than ip_addr_set: no NULL check */
