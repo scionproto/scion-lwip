@@ -54,10 +54,6 @@
 #if LWIP_TCP_TIMESTAMPS
 #include "lwip/sys.h"
 #endif
-#if SCION
-#include "lwip/scion.h"
-#define ip_output(a, b, c, d, e, f) scion_output(a, b, c, d, e, f)
-#endif /* SCION */
 
 #include <string.h>
 

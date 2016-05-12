@@ -49,11 +49,6 @@
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
 
-#if SCION
-#include "lwip/scion.h"
-#define ip_input(a, b) scion_input(a, b)
-#endif /* SCION */
-
 /* global variables */
 static tcpip_init_done_fn tcpip_init_done;
 static void *tcpip_init_done_arg;
