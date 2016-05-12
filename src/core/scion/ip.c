@@ -198,62 +198,14 @@ void scion_l3_input(u8_t *buf, int len){
 }
 /////////////////////////////////////////////////////////////////////////
 
-/**
- * Finds the appropriate network interface for a given IP address. It
- * searches the list of network interfaces linearly. A match is found
- * if the masked IP address of the network interface equals the masked
- * IP address given to the function.
- *
- * @param dest the destination IP address for which to find the route
- * @return the netif on which to send to reach dest
- */
 struct netif *
 ip_route(ip_addr_t *dest)
 {
-  struct netif *netif;
-
-#ifdef LWIP_HOOK_IP4_ROUTE
-  netif = LWIP_HOOK_IP4_ROUTE(dest);
-  if (netif != NULL) {
-    return netif;
-  }
-#endif
-
-  /* iterate through netifs */
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
-    /* network mask matches? */
-    if (netif_is_up(netif)) {
-      if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
-        /* return netif on which to forward IP packet */
-        return netif;
-      }
-    }
-  }
-  if ((netif_default == NULL) || (!netif_is_up(netif_default))) {
-    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
-      ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
-    IP_STATS_INC(ip.rterr);
-    snmp_inc_ipoutnoroutes();
-    return NULL;
-  }
-  /* no matching netif found, use default netif */
-  return netif_default;
+    // Should not be here.
+    fprintf(stderr, "ip_route() NOT IMPLEMENTED!");
+    return (struct netif *) NULL;
 }
 
-/**
- * This function is called by the network interface device driver when
- * an IP packet is received. The function does the basic checks of the
- * IP header such as packet size being at least larger than the header
- * size etc. If the packet was not destined for us, the packet is
- * forwarded (using ip_forward). The IP checksum is always checked.
- *
- * Finally, the packet is sent to the upper layer protocol input function.
- * 
- * @param p the received IP packet (p->payload points to IP header)
- * @param inp the netif on which this packet was received
- * @return ERR_OK if the packet was processed (could return ERR_* if it wasn't
- *         processed, but currently always returns ERR_OK)
- */
 err_t
 ip_input(struct pbuf *p, struct netif *inp){
     IP4_ADDR(&current_iphdr_src, 127,0,0,1);
@@ -266,31 +218,6 @@ ip_input(struct pbuf *p, struct netif *inp){
     return ERR_OK;
 }
 
-/**
- * Sends an IP packet on a network interface. This function constructs
- * the IP header and calculates the IP header checksum. If the source
- * IP address is NULL, the IP address of the outgoing network
- * interface is filled in as source address.
- * If the destination IP address is IP_HDRINCL, p is assumed to already
- * include an IP header and p->payload points to it instead of the data.
- *
- * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an IP
-            header and p->payload points to that IP header)
- * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
- *         IP  address of the netif used to send is used as source address)
- * @param dest the destination IP address to send the packet to
- * @param ttl the TTL value to be set in the IP header
- * @param tos the TOS value to be set in the IP header
- * @param proto the PROTOCOL to be set in the IP header
- * @param netif the netif on which to send this packet
- * @return ERR_OK if the packet was sent OK
- *         ERR_BUF if p doesn't have enough space for IP/LINK headers
- *         returns errors returned by netif->output
- *
- * @note ip_id: RFC791 "some host may be able to simply use
- *  unique identifiers independent of destination"
- */
 err_t
 ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
              u8_t ttl, u8_t tos,
@@ -298,25 +225,9 @@ ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 {
     // Should not be here.
     fprintf(stderr, "ip_output_if() NOT IMPLEMENTED!");
+    return ERR_ARG;
 }
 
-/**
- * Simple interface to ip_output_if. It finds the outgoing network
- * interface and calls upon ip_output_if to do the actual work.
- *
- * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an IP
-            header and p->payload points to that IP header)
- * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
- *         IP  address of the netif used to send is used as source address)
- * @param dest the destination IP address to send the packet to
- * @param ttl the TTL value to be set in the IP header
- * @param tos the TOS value to be set in the IP header
- * @param proto the PROTOCOL to be set in the IP header
- *
- * @return ERR_RTE if no route is found
- *         see ip_output_if() for more return values
- */
 err_t
 ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
         u8_t tos, u8_t proto){
@@ -336,9 +247,6 @@ ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
 }
 
 #if IP_DEBUG
-/* Print an IP header by using LWIP_DEBUGF
- * @param p an IP packet, p->payload pointing to the IP header
- */
 void
 ip_debug_print(struct pbuf *p)
 {
