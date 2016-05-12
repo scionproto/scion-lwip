@@ -105,13 +105,19 @@ tcp_input(struct pbuf *p, struct netif *inp)
   TCP_STATS_INC(tcp.recv);
   snmp_inc_tcpinsegs();
 
+#if !SCION
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
+#else
+  /* iphdr = (struct ip_hdr *)p->payload; */ // HERE SCION HEADER
+  tcphdr = (struct tcp_hdr *)((u8_t *)p->payload); //here jump to l4
+#endif
 
 #if TCP_INPUT_DEBUG
   tcp_debug_print(tcphdr);
 #endif
 
+#if !SCION
   /* remove header from payload */
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
     /* drop short packets */
@@ -119,6 +125,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
     TCP_STATS_INC(tcp.lenerr);
     goto dropped;
   }
+#else
+  // here truncate buf basing on SCION's hdr_len
+#endif
 
   /* Don't even process incoming broadcasts/multicasts. */
   if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||

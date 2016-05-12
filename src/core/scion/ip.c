@@ -55,20 +55,26 @@
 #include "arch/perf.h"
 #include "lwip/tcpip.h"
 
-/**
- * The interface that provided the packet for the current callback
- * invocation.
- */
-struct netif *current_netif;
-
 /** Source IP address of current_header */
 ip_addr_t current_iphdr_src;
 /** Destination IP address of current_header */
 ip_addr_t current_iphdr_dest;
 
-/** The IP header ID of the next outgoing IP packet */
-
 /////////////////////////////////////////////////////
+
+struct path {
+    u8_t *path;
+    u16_t len; // in bytes
+};
+
+err_t get_path(u16_t isd, u32_t as, struct path *p){
+    // validate isd,as and get path
+    int plen = 24;
+    p->path = malloc(plen);
+    memcpy(p->path, "012345678901234567890123", plen);
+    p->len = plen;
+    return ERR_OK;
+}
 
 void print_hex(char *buf, int len){
     int i;
@@ -78,48 +84,31 @@ void print_hex(char *buf, int len){
 
 }
 
-err_t add_ip_header(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
-       u16_t optlen)
+err_t 
+add_scion_header(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest)
 {
-  struct ip_hdr *iphdr;
-
   /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
      gets altered as the packet is passed down the stack */
-  LWIP_ASSERT("p->ref == 1", p->ref == 1);
+    LWIP_ASSERT("p->ref == 1", p->ref == 1);
+
+    //here call get_path etc...
 
 
   /* Should the IP header be generated or is it already included in p? */
-    u16_t ip_hlen = IP_HLEN;
+    /* u16_t ip_hlen = IP_HLEN; */
     /* generate IP header */
-    if (pbuf_header(p, IP_HLEN)) {
-      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_output: not enough room for IP header in pbuf\n"));
-      return ERR_BUF;
-    }
+    /* if (pbuf_header(p, IP_HLEN)) { */
+    /*   LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_output: not enough room for IP header in pbuf\n")); */
+    /*   return ERR_BUF; */
+    /* } */
 
-    iphdr = (struct ip_hdr *)p->payload;
-    LWIP_ASSERT("check that first pbuf can hold struct ip_hdr",
-               (p->len >= sizeof(struct ip_hdr)));
-
-    IPH_TTL_SET(iphdr, ttl);
-    IPH_PROTO_SET(iphdr, proto);
-
-    /* src and dest cannot be NULL here */
-    ip_addr_copy(iphdr->src, *src);
-    ip_addr_copy(iphdr->dest, *dest);
-
-    IPH_VHL_SET(iphdr, 4, ip_hlen / 4);
-    IPH_TOS_SET(iphdr, tos);
-    IPH_LEN_SET(iphdr, htons(p->tot_len));
-    IPH_OFFSET_SET(iphdr, 0);
-    IPH_ID_SET(iphdr, htons(1));
-
-
-    IPH_CHKSUM_SET(iphdr, 0);
-    ip_debug_print(p);
+    /* iphdr = (struct ip_hdr *)p->payload; */
+    /* LWIP_ASSERT("check that first pbuf can hold struct ip_hdr", */
+    /*            (p->len >= sizeof(struct ip_hdr))); */
 }
 
-void scion_l3_input(u8_t *buf, int len){
+void 
+scion_l3_input(u8_t *buf, int len){
     struct pbuf *p = pbuf_alloc(PBUF_IP, len, PBUF_RAM);
     MEMCPY(p->payload, buf, len);
 
@@ -138,11 +127,11 @@ ip_route(ip_addr_t *dest)
 
 err_t
 ip_input(struct pbuf *p, struct netif *inp){
-    IP4_ADDR(&current_iphdr_src, 127,0,0,1);
-    IP4_ADDR(&current_iphdr_dest, 127,0,0,1);
     fprintf(stderr, "scion_input() called\n");
     // here needs to have SCION header etc..., probably extensions should be
     // handled here etc...
+    IP4_ADDR(&current_iphdr_src, 127,0,0,1);
+    IP4_ADDR(&current_iphdr_dest, 127,0,0,1);
     fprintf(stderr, "tcp_input() called\n");
     tcp_input(p, inp);
     return ERR_OK;
@@ -154,31 +143,18 @@ ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
              u8_t proto, struct netif *netif)
 {
     // Should not be here.
-    fprintf(stderr, "ip_output_if() NOT IMPLEMENTED!");
+    fprintf(stderr, "ip_output_if() NOT IMPLEMENTED!\n");
     return ERR_ARG;
 }
 
 err_t
 ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
         u8_t tos, u8_t proto){
-    LWIP_UNUSED_ARG (ttl);
-    LWIP_UNUSED_ARG (tos);
 
-    u32_t saddr = *(u32_t *)src;                                                              
-    u32_t daddr = *(u32_t *)dst;
-
-    fprintf(stderr, "PSz: scion_output() called");
-    add_ip_header(p, src, dst, ttl, tos, proto, (struct netif*)NULL, NULL, 0); // For now, debug reasons.
-    fprintf(stderr, "PSz: sending %lu->%lu (%dB):\n", saddr, daddr, p->len);
-    print_hex((char *)p->payload, p->len);
-    fprintf(stderr, "\n\n");
+    add_scion_header(p, src, dst);
+    fprintf(stderr, "scion_output() %lu->%lu (%dB):\n", *(u32_t *)src, *(u32_t *)dst, p->len);
+    /* print_hex((char *)p->payload, p->len); */
+    fprintf(stderr, "\n");
     scion_l3_input(p->payload, p->len);
 }
 
-#if IP_DEBUG
-void
-ip_debug_print(struct pbuf *p)
-{
-    fprintf(stderr, "ip_debug_print() here");
-}
-#endif /* IP_DEBUG */
