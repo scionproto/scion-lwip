@@ -50,49 +50,12 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp_impl.h"
-#include "lwip/snmp.h"
-#include "lwip/dhcp.h"
 #include "lwip/autoip.h"
 #include "lwip/stats.h"
 #include "arch/perf.h"
 #include "lwip/tcpip.h"
 
 #include <string.h>
-
-/** Set this to 0 in the rare case of wanting to call an extra function to
- * generate the IP checksum (in contrast to calculating it on-the-fly). */
-#ifndef LWIP_INLINE_IP_CHKSUM
-#define LWIP_INLINE_IP_CHKSUM   1
-#endif
-#if LWIP_INLINE_IP_CHKSUM && CHECKSUM_GEN_IP
-#define CHECKSUM_GEN_IP_INLINE  1
-#else
-#define CHECKSUM_GEN_IP_INLINE  0
-#endif
-
-#if LWIP_DHCP || defined(LWIP_IP_ACCEPT_UDP_PORT)
-#define IP_ACCEPT_LINK_LAYER_ADDRESSING 1
-
-/** Some defines for DHCP to let link-layer-addressed packets through while the
- * netif is down.
- * To use this in your own application/protocol, define LWIP_IP_ACCEPT_UDP_PORT
- * to return 1 if the port is accepted and 0 if the port is not accepted.
- */
-#if LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT)
-/* accept DHCP client port and custom port */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (((port) == PP_NTOHS(DHCP_CLIENT_PORT)) \
-         || (LWIP_IP_ACCEPT_UDP_PORT(port)))
-#elif defined(LWIP_IP_ACCEPT_UDP_PORT) /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
-/* accept custom port only */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (LWIP_IP_ACCEPT_UDP_PORT(port))
-#else /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
-/* accept DHCP client port only */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) ((port) == PP_NTOHS(DHCP_CLIENT_PORT))
-#endif /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
-
-#else /* LWIP_DHCP */
-#define IP_ACCEPT_LINK_LAYER_ADDRESSING 0
-#endif /* LWIP_DHCP */
 
 /**
  * The interface that provided the packet for the current callback

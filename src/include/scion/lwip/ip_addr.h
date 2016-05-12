@@ -105,34 +105,6 @@ extern const ip_addr_t ip_addr_broadcast;
 
    On subnets, host and network parts are found according to
    the subnet mask, not these masks.  */
-#define IP_CLASSA(a)        ((((u32_t)(a)) & 0x80000000UL) == 0)
-#define IP_CLASSA_NET       0xff000000
-#define IP_CLASSA_NSHIFT    24
-#define IP_CLASSA_HOST      (0xffffffff & ~IP_CLASSA_NET)
-#define IP_CLASSA_MAX       128
-
-#define IP_CLASSB(a)        ((((u32_t)(a)) & 0xc0000000UL) == 0x80000000UL)
-#define IP_CLASSB_NET       0xffff0000
-#define IP_CLASSB_NSHIFT    16
-#define IP_CLASSB_HOST      (0xffffffff & ~IP_CLASSB_NET)
-#define IP_CLASSB_MAX       65536
-
-#define IP_CLASSC(a)        ((((u32_t)(a)) & 0xe0000000UL) == 0xc0000000UL)
-#define IP_CLASSC_NET       0xffffff00
-#define IP_CLASSC_NSHIFT    8
-#define IP_CLASSC_HOST      (0xffffffff & ~IP_CLASSC_NET)
-
-#define IP_CLASSD(a)        (((u32_t)(a) & 0xf0000000UL) == 0xe0000000UL)
-#define IP_CLASSD_NET       0xf0000000          /* These ones aren't really */
-#define IP_CLASSD_NSHIFT    28                  /*   net and host fields, but */
-#define IP_CLASSD_HOST      0x0fffffff          /*   routing needn't know. */
-#define IP_MULTICAST(a)     IP_CLASSD(a)
-
-#define IP_EXPERIMENTAL(a)  (((u32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
-#define IP_BADCLASS(a)      (((u32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
-
-#define IP_LOOPBACKNET      127                 /* official! */
-
 
 #if BYTE_ORDER == BIG_ENDIAN
 /** Set an IP address given by the four byte-parts */
@@ -168,33 +140,12 @@ extern const ip_addr_t ip_addr_broadcast;
 #define ip_addr_set_zero(ipaddr)      ((ipaddr)->addr = 0)
 /** Set address to IPADDR_ANY (no need for htonl()) */
 #define ip_addr_set_any(ipaddr)       ((ipaddr)->addr = IPADDR_ANY)
-/** Set address to loopback address */
-#define ip_addr_set_loopback(ipaddr)  ((ipaddr)->addr = PP_HTONL(IPADDR_LOOPBACK))
-/** Safely copy one IP address to another and change byte order
- * from host- to network-order. */
-#define ip_addr_set_hton(dest, src) ((dest)->addr = \
-                               ((src) == NULL ? 0:\
-                               htonl((src)->addr)))
 /** IPv4 only: set the IP address given as an u32_t */
 #define ip4_addr_set_u32(dest_ipaddr, src_u32) ((dest_ipaddr)->addr = (src_u32))
 /** IPv4 only: get the IP address as an u32_t */
 #define ip4_addr_get_u32(src_ipaddr) ((src_ipaddr)->addr)
 
-/** Get the network address by combining host address with netmask */
-#define ip_addr_get_network(target, host, netmask) ((target)->addr = ((host)->addr) & ((netmask)->addr))
 
-/**
- * Determine if two address are on the same network.
- *
- * @arg addr1 IP address 1
- * @arg addr2 IP address 2
- * @arg mask network identifier mask
- * @return !0 if the network identifiers of both address match
- */
-#define ip_addr_netcmp(addr1, addr2, mask) (((addr1)->addr & \
-                                              (mask)->addr) == \
-                                             ((addr2)->addr & \
-                                              (mask)->addr))
 #define ip_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
 
 #define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
@@ -207,23 +158,7 @@ u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif);
 #define ip_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
 #define ip_addr_debug_print(debug, ipaddr) \
-  LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F,             \
-                      ipaddr != NULL ? ip4_addr1_16(ipaddr) : 0,       \
-                      ipaddr != NULL ? ip4_addr2_16(ipaddr) : 0,       \
-                      ipaddr != NULL ? ip4_addr3_16(ipaddr) : 0,       \
-                      ipaddr != NULL ? ip4_addr4_16(ipaddr) : 0))
-
-/* Get one byte from the 4-byte address */
-#define ip4_addr1(ipaddr) (((u8_t*)(ipaddr))[0])
-#define ip4_addr2(ipaddr) (((u8_t*)(ipaddr))[1])
-#define ip4_addr3(ipaddr) (((u8_t*)(ipaddr))[2])
-#define ip4_addr4(ipaddr) (((u8_t*)(ipaddr))[3])
-/* These are cast to u16_t, with the intent that they are often arguments
- * to printf using the U16_F format from cc.h. */
-#define ip4_addr1_16(ipaddr) ((u16_t)ip4_addr1(ipaddr))
-#define ip4_addr2_16(ipaddr) ((u16_t)ip4_addr2(ipaddr))
-#define ip4_addr3_16(ipaddr) ((u16_t)ip4_addr3(ipaddr))
-#define ip4_addr4_16(ipaddr) ((u16_t)ip4_addr4(ipaddr))
+  LWIP_DEBUGF(debug, ("ip_addr_debug_print()"))
 
 /** For backwards compatibility */
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
