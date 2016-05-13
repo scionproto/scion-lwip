@@ -119,7 +119,7 @@ scion_l3_input(u8_t *buf, int len){
 /////////////////////////////////////////////////////////////////////////
 
 struct netif *
-ip_route(ip_addr_t *dest)
+scion_route(ip_addr_t *dest)
 {
     // Should not be here.
     fprintf(stderr, "ip_route() NOT IMPLEMENTED!");
@@ -127,19 +127,20 @@ ip_route(ip_addr_t *dest)
 }
 
 err_t
-ip_input(struct pbuf *p, struct netif *inp){
+scion_input(struct pbuf *p, struct netif *inp){
     fprintf(stderr, "scion_input() called\n");
     // here needs to have SCION header etc..., probably extensions should be
     // handled here etc...
-    current_iphdr_src.addr = 16777343; // 127.0.0.1
-    current_iphdr_dest.addr = 16777343; // 127.0.0.1
+    u8_t def_addr[] = {127, 0, 0, 1};
+    scion_addr(&current_iphdr_src, 1, 2, ADDR_IPV4_TYPE, def_addr);
+    scion_addr(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr);
     fprintf(stderr, "tcp_input() called\n");
     tcp_input(p, inp);
     return ERR_OK;
 }
 
 err_t
-ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
+scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
         u8_t tos, u8_t proto){
 
     add_scion_header(p, src, dst);

@@ -92,10 +92,13 @@ extern ip_addr_t current_iphdr_src;
 extern ip_addr_t current_iphdr_dest;
 
 #define ip_init() /* Compatibility define, not init needed. */
+#define ip_route(a) scion_route(a)
 struct netif *ip_route(ip_addr_t *dest);
-err_t ip_input(struct pbuf *p, struct netif *inp);
-err_t ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+err_t scion_input(struct pbuf *p, struct netif *inp);
+#define ip_input(a, b) scion_input(a, b)
+err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto);
+#define ip_output(a, b, c, d, e, f) scion_output(a, b, c, d, e, f)
 /** Source IP address of current_header */
 #define ip_current_src_addr()  (&current_iphdr_src)
 /** Destination IP address of current_header */

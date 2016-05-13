@@ -32,54 +32,47 @@
 #ifndef __LWIP_IP_ADDR_H__
 #define __LWIP_IP_ADDR_H__
 
+#include <stdint.h>
+#include <string.h>
 #include "lwip/opt.h"
 #include "lwip/def.h"
+#include "libscion/address.h"
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* This is the aligned version of ip_addr_t,
-   used as local variable, on the stack, etc. */
-struct ip_addr {
-  u32_t addr;
+#define MAX_ADDR_LEN (4 + MAX_HOST_ADDR_LEN)
+
+struct scion_addr {
+  u8_t addr[MAX_ADDR_LEN];
+  u8_t type;
 };
 
-/** ip_addr_t uses a struct for convenience only, so that the same defines can
- * operate both on ip_addr_t as well as on ip_addr_p_t. */
-typedef struct ip_addr ip_addr_t;
+typedef struct scion_addr ip_addr_t;
 
-#define IPADDR_ANY          ((u32_t)0x00000000UL)
+void scion_addr(ip_addr_t *addr, u16_t isd, u32_t ad, u8_t type, u8_t *host_addr);
 
-/** Set an IP address given by the four byte-parts.
-    Little-endian version that prevents the use of htonl. */
-#define IP4_ADDR(ipaddr, a,b,c,d) \
-        (ipaddr)->addr = ((u32_t)((d) & 0xff) << 24) | \
-                         ((u32_t)((c) & 0xff) << 16) | \
-                         ((u32_t)((b) & 0xff) << 8)  | \
-                          (u32_t)((a) & 0xff)
+#define ip_addr_set(a, b) scion_addr_set(a, b)
+#define ip_addr_copy(a, b) scion_addr_set(&a, &b)
+void scion_addr_set(ip_addr_t *dst, const ip_addr_t *src);
 
-/** Copy IP address - faster than ip_addr_set: no NULL check */
-#define ip_addr_copy(dest, src) ((dest).addr = (src).addr)
-/** Safely copy one IP address to another (src may be NULL) */
-#define ip_addr_set(dest, src) ((dest)->addr = \
-                                    ((src) == NULL ? 0 : \
-                                    (src)->addr))
-/** Set address to IPADDR_ANY (no need for htonl()) */
-#define ip_addr_set_any(ipaddr)       ((ipaddr)->addr = IPADDR_ANY)
-/** IPv4 only: get the IP address as an u32_t */
-#define ip4_addr_get_u32(src_ipaddr) ((src_ipaddr)->addr)
+#define ip_addr_set_any(a) scion_addr_set_any(a)
+void ip_addr_set_any(ip_addr_t *addr);
 
+u32_t ip4_addr_get_u32(const ip_addr_t *addr);
 
-#define ip_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
+#define ip_addr_cmp(a, b) scion_addr_cmp(a, b)
+int ip_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2);
 
-#define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
+#define ip_addr_isany(a) scion_addr_isany(a)
+int scion_addr_isany(const ip_addr_t *addr);
 
 #define ip_addr_isbroadcast(ipaddr, netif) 0
 #define ip_addr_ismulticast(addr1) 0
 
-#define ip_addr_debug_print(debug, ipaddr) \
-  LWIP_DEBUGF(debug, ("ip_addr_debug_print()"))
+void print_scion_addr(ip_addr_t *addr);
 
 #ifdef __cplusplus
 }
