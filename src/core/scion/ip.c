@@ -138,16 +138,6 @@ ip_input(struct pbuf *p, struct netif *inp){
 }
 
 err_t
-ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
-             u8_t ttl, u8_t tos,
-             u8_t proto, struct netif *netif)
-{
-    // Should not be here.
-    fprintf(stderr, "ip_output_if() NOT IMPLEMENTED!\n");
-    return ERR_ARG;
-}
-
-err_t
 ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
         u8_t tos, u8_t proto){
 

@@ -44,30 +44,9 @@
 extern "C" {
 #endif
 
-/** Currently, the function ip_output_if_opt() is only used with IGMP */
-#define IP_OPTIONS_SEND   LWIP_IGMP
-
 #define IP_HLEN 20
 
-#define IP_PROTO_ICMP    1
-#define IP_PROTO_IGMP    2
-#define IP_PROTO_UDP     17
-#define IP_PROTO_UDPLITE 136
 #define IP_PROTO_TCP     6
-
-/* This is passed as the destination address to ip_output_if (not
-   to ip_output), meaning that an IP header already is constructed
-   in the pbuf. This is used when TCP retransmits. */
-#ifdef IP_HDRINCL
-#undef IP_HDRINCL
-#endif /* IP_HDRINCL */
-#define IP_HDRINCL  NULL
-
-#if LWIP_NETIF_HWADDRHINT
-#define IP_PCB_ADDRHINT ;u8_t addr_hint
-#else
-#define IP_PCB_ADDRHINT
-#endif /* LWIP_NETIF_HWADDRHINT */
 
 /* This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
@@ -82,9 +61,7 @@ extern "C" {
    /* Type Of Service */ \
   u8_t tos;              \
   /* Time To Live */     \
-  u8_t ttl               \
-  /* link layer address resolution hint */ \
-  IP_PCB_ADDRHINT
+  u8_t ttl
 
 struct ip_pcb {
 /* Common members of all PCB types */
@@ -109,9 +86,6 @@ struct ip_pcb {
 #define SOF_INHERITED   (SOF_REUSEADDR|SOF_KEEPALIVE|SOF_LINGER/*|SOF_DEBUG|SOF_DONTROUTE|SOF_OOBINLINE*/)
 
 
-/** The interface that provided the packet for the current callback invocation. */
-/** Header of the input packet currently being processed. */
-extern const struct ip_hdr *current_header;
 /** Source IP address of current_header */
 extern ip_addr_t current_iphdr_src;
 /** Destination IP address of current_header */
@@ -122,18 +96,6 @@ struct netif *ip_route(ip_addr_t *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
 err_t ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto);
-err_t ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto,
-       struct netif *netif);
-#if LWIP_NETIF_HWADDRHINT
-err_t ip_output_hinted(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
-#endif /* LWIP_NETIF_HWADDRHINT */
-#if IP_OPTIONS_SEND
-err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
-       u16_t optlen);
-#endif /* IP_OPTIONS_SEND */
 /** Source IP address of current_header */
 #define ip_current_src_addr()  (&current_iphdr_src)
 /** Destination IP address of current_header */
