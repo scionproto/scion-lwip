@@ -49,36 +49,8 @@ struct ip_addr {
  * operate both on ip_addr_t as well as on ip_addr_p_t. */
 typedef struct ip_addr ip_addr_t;
 
-/* Forward declaration to not include netif.h */
-struct netif;
-
-extern const ip_addr_t ip_addr_any;
-extern const ip_addr_t ip_addr_broadcast;
-
-/** IP_ADDR_ can be used as a fixed IP address
- *  for the wildcard and the broadcast address
- */
-#define IP_ADDR_ANY         ((ip_addr_t *)&ip_addr_any)
-#define IP_ADDR_BROADCAST   ((ip_addr_t *)&ip_addr_broadcast)
-
-/** 255.255.255.255 */
-#define IPADDR_NONE         ((u32_t)0xffffffffUL)
-/** 0.0.0.0 */
 #define IPADDR_ANY          ((u32_t)0x00000000UL)
 
-/* Definitions of the bits in an Internet address integer.
-
-   On subnets, host and network parts are found according to
-   the subnet mask, not these masks.  */
-
-#if BYTE_ORDER == BIG_ENDIAN
-/** Set an IP address given by the four byte-parts */
-#define IP4_ADDR(ipaddr, a,b,c,d) \
-        (ipaddr)->addr = ((u32_t)((a) & 0xff) << 24) | \
-                         ((u32_t)((b) & 0xff) << 16) | \
-                         ((u32_t)((c) & 0xff) << 8)  | \
-                          (u32_t)((d) & 0xff)
-#else
 /** Set an IP address given by the four byte-parts.
     Little-endian version that prevents the use of htonl. */
 #define IP4_ADDR(ipaddr, a,b,c,d) \
@@ -86,7 +58,6 @@ extern const ip_addr_t ip_addr_broadcast;
                          ((u32_t)((c) & 0xff) << 16) | \
                          ((u32_t)((b) & 0xff) << 8)  | \
                           (u32_t)((a) & 0xff)
-#endif
 
 /** Copy IP address - faster than ip_addr_set: no NULL check */
 #define ip_addr_copy(dest, src) ((dest).addr = (src).addr)

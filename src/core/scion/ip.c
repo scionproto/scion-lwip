@@ -130,8 +130,8 @@ ip_input(struct pbuf *p, struct netif *inp){
     fprintf(stderr, "scion_input() called\n");
     // here needs to have SCION header etc..., probably extensions should be
     // handled here etc...
-    IP4_ADDR(&current_iphdr_src, 127,0,0,1);
-    IP4_ADDR(&current_iphdr_dest, 127,0,0,1);
+    current_iphdr_src.addr = 16777343; // 127.0.0.1
+    current_iphdr_dest.addr = 16777343; // 127.0.0.1
     fprintf(stderr, "tcp_input() called\n");
     tcp_input(p, inp);
     return ERR_OK;

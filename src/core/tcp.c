@@ -712,7 +712,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
 #else
-    IP4_ADDR(&(pcb->local_ip), 127,0,0,1);
+    pcb->local_ip.addr = 16777343; // 127.0.0.1
 #endif
 
   old_local_port = pcb->local_port;
