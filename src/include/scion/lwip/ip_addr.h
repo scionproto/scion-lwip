@@ -63,12 +63,8 @@ extern const ip_addr_t ip_addr_broadcast;
 
 /** 255.255.255.255 */
 #define IPADDR_NONE         ((u32_t)0xffffffffUL)
-/** 127.0.0.1 */
-#define IPADDR_LOOPBACK     ((u32_t)0x7f000001UL)
 /** 0.0.0.0 */
 #define IPADDR_ANY          ((u32_t)0x00000000UL)
-/** 255.255.255.255 */
-#define IPADDR_BROADCAST    ((u32_t)0xffffffffUL)
 
 /* Definitions of the bits in an Internet address integer.
 
@@ -98,12 +94,8 @@ extern const ip_addr_t ip_addr_broadcast;
 #define ip_addr_set(dest, src) ((dest)->addr = \
                                     ((src) == NULL ? 0 : \
                                     (src)->addr))
-/** Set complete address to zero */
-#define ip_addr_set_zero(ipaddr)      ((ipaddr)->addr = 0)
 /** Set address to IPADDR_ANY (no need for htonl()) */
 #define ip_addr_set_any(ipaddr)       ((ipaddr)->addr = IPADDR_ANY)
-/** IPv4 only: set the IP address given as an u32_t */
-#define ip4_addr_set_u32(dest_ipaddr, src_u32) ((dest_ipaddr)->addr = (src_u32))
 /** IPv4 only: get the IP address as an u32_t */
 #define ip4_addr_get_u32(src_ipaddr) ((src_ipaddr)->addr)
 
@@ -112,24 +104,11 @@ extern const ip_addr_t ip_addr_broadcast;
 
 #define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
 
-#define ip_addr_isbroadcast(ipaddr, netif) ip4_addr_isbroadcast((ipaddr)->addr, (netif))
-u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif);
-
+#define ip_addr_isbroadcast(ipaddr, netif) 0
 #define ip_addr_ismulticast(addr1) 0
-
-#define ip_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
 #define ip_addr_debug_print(debug, ipaddr) \
   LWIP_DEBUGF(debug, ("ip_addr_debug_print()"))
-
-/** For backwards compatibility */
-#define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
-
-u32_t ipaddr_addr(const char *cp);
-int ipaddr_aton(const char *cp, ip_addr_t *addr);
-/** returns ptr to static buffer; not reentrant! */
-char *ipaddr_ntoa(const ip_addr_t *addr);
-char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen);
 
 #ifdef __cplusplus
 }
