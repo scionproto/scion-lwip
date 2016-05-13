@@ -69,6 +69,7 @@ struct path {
 
 err_t get_path(u16_t isd, u32_t as, struct path *p){
     // validate isd,as and get path
+    // caller has to remember to free(p->path);
     int plen = 24;
     p->path = malloc(plen);
     memcpy(p->path, "012345678901234567890123", plen);
