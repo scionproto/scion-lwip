@@ -52,7 +52,8 @@ struct scion_addr {
 
 typedef struct scion_addr ip_addr_t;
 
-void scion_addr(ip_addr_t *addr, u16_t isd, u32_t ad, u8_t type, u8_t *host_addr);
+void scion_addr_val(ip_addr_t *addr, u16_t isd, u32_t ad, u8_t type, u8_t *host_addr);
+void scion_addr_raw(ip_addr_t *addr, u8_t type, const u8_t *raw_addr);
 
 #define ip_addr_set(a, b) scion_addr_set(a, b)
 #define ip_addr_copy(a, b) scion_addr_set(&a, &b)

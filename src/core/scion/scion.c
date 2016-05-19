@@ -132,8 +132,8 @@ scion_input(struct pbuf *p, struct netif *inp){
     // here needs to have SCION header etc..., probably extensions should be
     // handled here etc...
     u8_t def_addr[] = {127, 0, 0, 1};
-    scion_addr(&current_iphdr_src, 1, 2, ADDR_IPV4_TYPE, def_addr);
-    scion_addr(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr);
+    scion_addr_val(&current_iphdr_src, 1, 2, ADDR_IPV4_TYPE, def_addr);
+    scion_addr_val(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr);
     fprintf(stderr, "tcp_input() called\n");
     tcp_input(p, inp);
     return ERR_OK;

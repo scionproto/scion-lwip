@@ -713,7 +713,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   }
 #else
     u8_t def_addr[] = {127, 0, 0, 1};
-    scion_addr(&(pcb->local_ip), 1, 2, ADDR_IPV4_TYPE, def_addr);
+    scion_addr_val(&(pcb->local_ip), 1, 2, ADDR_IPV4_TYPE, def_addr);
 #endif
 
   old_local_port = pcb->local_port;
