@@ -50,6 +50,7 @@ struct scion_addr {
   u8_t type;
 };
 
+int get_addr_len(int);
 typedef struct scion_addr ip_addr_t;
 
 void scion_addr_val(ip_addr_t *addr, u16_t isd, u32_t ad, u8_t type, u8_t *host_addr);
