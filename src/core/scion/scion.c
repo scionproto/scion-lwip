@@ -60,12 +60,6 @@ ip_addr_t current_iphdr_src;
 /** Destination IP address of current_header */
 ip_addr_t current_iphdr_dest;
 
-/////////////////////////////////////////////////////
-
-struct path {
-    u8_t *path;
-    u16_t len; // in bytes
-};
 
 err_t get_path(u16_t isd, u32_t as, struct path *p){
     // validate isd,as and get path
@@ -140,9 +134,8 @@ scion_input(struct pbuf *p, struct netif *inp){
 }
 
 err_t
-scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, u8_t ttl,
-        u8_t tos, u8_t proto){
-
+scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
+             exts_t *exts, u8_t proto){
     add_scion_header(p, src, dst);
     fprintf(stderr, "scion_output() %lu->%lu (%dB):\n", *(u32_t *)src, *(u32_t *)dst, p->len);
     /* print_hex((char *)p->payload, p->len); */

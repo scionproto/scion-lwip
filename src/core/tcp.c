@@ -479,7 +479,11 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   }
 
   if (!ip_addr_isany(ipaddr)) {
+#if !SCION
     pcb->local_ip = *ipaddr;
+#else
+    scion_addr_set(&pcb->local_ip, ipaddr);
+#endif
   }
   pcb->local_port = port;
   TCP_REG(&tcp_bound_pcbs, pcb);
@@ -552,8 +556,14 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->prio = pcb->prio;
   lpcb->so_options = pcb->so_options;
   ip_set_option(lpcb, SOF_ACCEPTCONN);
+#if SCION
+  lpcb->path = NULL; //copy from pcb
+  lpcb->exts = NULL;
+  lpcb->svc = NO_SVC; 
+#else
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
+#endif
   ip_addr_copy(lpcb->local_ip, pcb->local_ip);
   if (pcb->local_port != 0) {
     TCP_RMV(&tcp_bound_pcbs, pcb);
@@ -692,7 +702,11 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
   if (ipaddr != NULL) {
+#if !SCION
     pcb->remote_ip = *ipaddr;
+#else
+    scion_addr_set(&pcb->remote_ip, ipaddr);
+#endif
   } else {
     return ERR_VAL;
   }
@@ -1317,8 +1331,14 @@ tcp_alloc(u8_t prio)
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
     pcb->rcv_ann_wnd = TCP_WND;
+#if SCION
+    pcb->path = NULL;
+    pcb->exts = NULL;
+    pcb->svc = NO_SVC;
+#else
     pcb->tos = 0;
     pcb->ttl = TCP_TTL;
+#endif
     /* As initial send MSS, we use TCP_MSS but limit it to 536.
        The send MSS is updated when an MSS option is received. */
     pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;

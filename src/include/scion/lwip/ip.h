@@ -44,8 +44,31 @@
 extern "C" {
 #endif
 
-#define IP_HLEN 20
+// SCION part
+struct path {
+    u8_t *path;
+    u16_t len; // in bytes
+};
+typedef struct path spath_t;
 
+struct scion_ext_hdr {
+    u8_t len;
+    u8_t class_;
+    u8_t type;
+    u8_t *payload;
+};
+typedef struct scion_ext_hdr seh_t;
+
+struct scion_exts {
+    u8_t number;
+    seh_t *extensions;
+};
+typedef struct scion_exts exts_t;
+
+#define NO_SVC 0xff
+//
+
+#define IP_HLEN 20
 #define IP_PROTO_TCP     6
 
 /* This is the common part of all PCB types. It needs to be at the
@@ -58,10 +81,12 @@ extern "C" {
   ip_addr_t remote_ip; \
    /* Socket options */  \
   u8_t so_options;      \
-   /* Type Of Service */ \
-  u8_t tos;              \
-  /* Time To Live */     \
-  u8_t ttl
+   /* SCION Path */ \
+  spath_t *path;    \
+   /* SCION Extensions */ \
+  exts_t *exts; \
+  /* SVC Addr */ \
+  u8_t svc;
 
 struct ip_pcb {
 /* Common members of all PCB types */
@@ -96,9 +121,8 @@ extern ip_addr_t current_iphdr_dest;
 struct netif *ip_route(ip_addr_t *dest);
 err_t scion_input(struct pbuf *p, struct netif *inp);
 #define ip_input(a, b) scion_input(a, b)
-err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
-       u8_t ttl, u8_t tos, u8_t proto);
-#define ip_output(a, b, c, d, e, f) scion_output(a, b, c, d, e, f)
+err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, 
+                   spath_t *path, exts_t *exts, u8_t proto);
 /** Source IP address of current_header */
 #define ip_current_src_addr()  (&current_iphdr_src)
 /** Destination IP address of current_header */
@@ -108,8 +132,6 @@ err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 #define ip_get_option(pcb, opt)   ((pcb)->so_options & (opt))
 /** Sets an IP pcb option (SOF_* flags) */
 #define ip_set_option(pcb, opt)   ((pcb)->so_options |= (opt))
-/** Resets an IP pcb option (SOF_* flags) */
-#define ip_reset_option(pcb, opt) ((pcb)->so_options &= ~(opt))
 
 #ifdef __cplusplus
 }
