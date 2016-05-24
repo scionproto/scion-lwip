@@ -1201,7 +1201,11 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 void
 tcp_rst(u32_t seqno, u32_t ackno,
   ip_addr_t *local_ip, ip_addr_t *remote_ip,
+#if !SCION
   u16_t local_port, u16_t remote_port)
+#else
+  u16_t local_port, u16_t remote_port, spath_t *path, exts_t *exts)
+#endif
 {
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
@@ -1231,7 +1235,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   snmp_inc_tcpoutrsts();
    /* Send output with hardcoded TTL since we have no access to the pcb */
 #if SCION
-  scion_output(p, local_ip, remote_ip, NULL, NULL, IP_PROTO_TCP);
+  scion_output(p, local_ip, remote_ip, path, exts, IP_PROTO_TCP);
 #else
   ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
 #endif

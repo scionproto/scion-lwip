@@ -180,7 +180,11 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
       /* don't call tcp_abort here: we must not deallocate the pcb since
          that might not be expected when calling tcp_close */
       tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
+#if !SCION
         pcb->local_port, pcb->remote_port);
+#else
+        pcb->local_port, pcb->remote_port, pcb->path, pcb->exts);
+#endif
 
       tcp_pcb_purge(pcb);
       TCP_RMV_ACTIVE(pcb);
@@ -392,7 +396,12 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 #endif /* TCP_QUEUE_OOSEQ */
     if (reset) {
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
-      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port);
+      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port
+#if !SCION
+        );
+#else
+        , pcb->path, pcb->exts);
+#endif
     }
     memp_free(MEMP_TCP_PCB, pcb);
     TCP_EVENT_ERR(errf, errf_arg, ERR_ABRT);
@@ -982,7 +991,11 @@ tcp_slowtmr_start:
 
       if (pcb_reset) {
         tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
+#if !SCION
           pcb->local_port, pcb->remote_port);
+#else
+          pcb->local_port, pcb->remote_port, pcb->path, pcb->exts);
+#endif
       }
 
       err_fn = pcb->errf;
