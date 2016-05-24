@@ -880,7 +880,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
 #elif SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), NULL, NULL, IP_PROTO_TCP);
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, NULL, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
@@ -1171,7 +1171,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   ip_output_hinted(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
 #elif SCION
-  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), NULL, NULL, IP_PROTO_TCP);
+  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, NULL, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
@@ -1405,7 +1405,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
 #elif SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), NULL, NULL, IP_PROTO_TCP);
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, NULL, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
@@ -1490,7 +1490,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
 #elif SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), NULL, NULL, IP_PROTO_TCP);
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, NULL, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
