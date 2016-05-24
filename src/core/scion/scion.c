@@ -138,6 +138,11 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
              exts_t *exts, u8_t proto){
     add_scion_header(p, src, dst);
     fprintf(stderr, "scion_output() %lu->%lu (%dB):\n", *(u32_t *)src, *(u32_t *)dst, p->len);
+    if (path != NULL)
+        fprintf(stderr, "PATH(%dB): %s\n", path->len, (char*)path->path);
+    else
+        fprintf(stderr, "PATH is NULL\n");
+
     /* print_hex((char *)p->payload, p->len); */
     fprintf(stderr, "\n");
     scion_l3_input(p->payload, p->len);
