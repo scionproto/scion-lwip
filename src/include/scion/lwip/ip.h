@@ -76,7 +76,7 @@ typedef struct scion_exts exts_t;
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
 #define IP_PCB \
-  /* ip addresses in network byte order */ \
+  /* SCION Addresses in the fact */ \
   ip_addr_t local_ip; \
   ip_addr_t remote_ip; \
    /* Socket options */  \
