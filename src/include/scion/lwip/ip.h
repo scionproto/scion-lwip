@@ -45,11 +45,11 @@ extern "C" {
 #endif
 
 // SCION part
-struct path {
-    u8_t *path;
+struct scion_path {
+    u8_t *path; // FIXME(PSz): rename it to raw
     u16_t len; // in bytes
 };
-typedef struct path spath_t;
+typedef struct scion_path spath_t;
 
 struct scion_ext_hdr {
     u8_t len;

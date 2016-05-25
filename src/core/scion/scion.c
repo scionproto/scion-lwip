@@ -66,7 +66,7 @@ exts_t current_exts;
 int conn_counter = 0;
 
 
-err_t get_path(u16_t isd, u32_t as, struct path *p){
+err_t get_path(u16_t isd, u32_t as, spath_t *p){
     // validate isd,as and get path
     // caller has to remember to free(p->path);
     int plen = 24;
