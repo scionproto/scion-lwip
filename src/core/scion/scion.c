@@ -59,6 +59,11 @@
 ip_addr_t current_iphdr_src;
 /** Destination IP address of current_header */
 ip_addr_t current_iphdr_dest;
+/**  SCION path of current_header */
+spath_t current_path = {.path = NULL};
+/**  SCION extensions of current_header */
+exts_t current_exts;
+int conn_counter = 0;
 
 
 err_t get_path(u16_t isd, u32_t as, struct path *p){
@@ -128,6 +133,16 @@ scion_input(struct pbuf *p, struct netif *inp){
     u8_t def_addr[] = {127, 0, 0, 1};
     scion_addr_val(&current_iphdr_src, 1, 2, ADDR_IPV4_TYPE, def_addr);
     scion_addr_val(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr);
+
+    if (current_path.path != NULL) //FIXME(PSz): don't need to free if lengts are OK
+        free(current_path.path);
+    char tmp[200];
+    sprintf(tmp, "%s%d", "REVERSED", conn_counter);
+    current_path.len = strlen(tmp);
+    current_path.path = malloc(current_path.len);
+    memcpy(current_path.path, tmp, current_path.len);
+    conn_counter++;
+
     fprintf(stderr, "tcp_input() called\n");
     tcp_input(p, inp);
     return ERR_OK;

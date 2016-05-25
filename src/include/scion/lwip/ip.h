@@ -115,6 +115,10 @@ struct ip_pcb {
 extern ip_addr_t current_iphdr_src;
 /** Destination IP address of current_header */
 extern ip_addr_t current_iphdr_dest;
+/**  SCION path of current_header */
+extern spath_t current_path; 
+/**  SCION extensions of current_header */
+extern exts_t current_exts;
 
 #define ip_init() /* Compatibility define, not init needed. */
 #define ip_route(a) scion_route(a)

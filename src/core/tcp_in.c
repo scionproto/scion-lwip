@@ -109,10 +109,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 #else
-  spath_t path;
-  path.path = "ABCD";
-  path.len = 4;
-  exts_t *exts = NULL;
   /* iphdr = (struct ip_hdr *)p->payload; */ // HERE SCION HEADER
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload); //here jump to l4
 #endif
@@ -427,7 +423,7 @@ aborted:
 #if !SCION
         tcphdr->dest, tcphdr->src);
 #else
-        tcphdr->dest, tcphdr->src, &path, exts);
+        tcphdr->dest, tcphdr->src, &current_path, &current_exts);
 #endif
     }
     pbuf_free(p);
@@ -475,7 +471,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #if !SCION
       ip_current_src_addr(), tcphdr->dest, tcphdr->src);
 #else
-      ip_current_src_addr(), tcphdr->dest, tcphdr->src, pcb->path, pcb->exts);
+      ip_current_src_addr(), tcphdr->dest, tcphdr->src, &current_path, &current_exts);
 #endif
   } else if (flags & TCP_SYN) {
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
@@ -525,6 +521,14 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->mss = tcp_eff_send_mss(npcb->mss, &(npcb->remote_ip));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
+#if SCION
+    spath_t *path = malloc(sizeof *path);
+    path->path = malloc(current_path.len);
+    memcpy(path->path, current_path.path, current_path.len);
+    path->len = current_path.len;
+    npcb->path = path;
+#endif
+
     snmp_inc_tcppassiveopens();
 
     /* Send a SYN|ACK together with the MSS option. */
@@ -568,7 +572,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
 #if !SCION
         tcphdr->dest, tcphdr->src);
 #else
-        tcphdr->dest, tcphdr->src, pcb->path, pcb->exts);
+        tcphdr->dest, tcphdr->src, &current_path, &current_exts);
 #endif
       return ERR_OK;
     }
@@ -706,7 +710,7 @@ tcp_process(struct tcp_pcb *pcb)
 #if !SCION
         tcphdr->dest, tcphdr->src);
 #else
-        tcphdr->dest, tcphdr->src, pcb->path, pcb->exts);
+        tcphdr->dest, tcphdr->src, &current_path, &current_exts);
 #endif
     }
     break;
