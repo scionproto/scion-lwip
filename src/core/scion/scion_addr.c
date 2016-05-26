@@ -1,6 +1,5 @@
 #include "lwip/ip_addr.h"
 #define ANY_ADDR_TYPE 0xff // PSz: could we reuse NONE for that?
-#define NO_SVC 0xff
 
 int get_haddr_len(int type){
     if (type == ADDR_IPV4_TYPE)

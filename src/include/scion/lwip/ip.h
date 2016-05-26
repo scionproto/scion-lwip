@@ -64,8 +64,6 @@ struct scion_exts {
     seh_t *extensions;
 };
 typedef struct scion_exts exts_t;
-
-#define NO_SVC 0xff
 //
 
 #define IP_HLEN 20

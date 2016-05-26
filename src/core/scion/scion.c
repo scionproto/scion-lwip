@@ -130,9 +130,9 @@ scion_input(struct pbuf *p, struct netif *inp){
     fprintf(stderr, "scion_input() called\n");
     // here needs to have SCION header etc..., probably extensions should be
     // handled here etc...
-    u8_t def_addr[] = {127, 0, 0, 1};
-    scion_addr_val(&current_iphdr_src, 1, 2, ADDR_IPV4_TYPE, def_addr);
-    scion_addr_val(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr);
+    /* u8_t def_addr[] = {127, 0, 0, 1}; */
+    /* scion_addr_val(&current_iphdr_src, 1, 2, ADDR_IPV4_TYPE, def_addr); */
+    /* scion_addr_val(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr); */
 
     // FIXME(PSz): don't have to alloc, just point
     if (current_path.path != NULL) //FIXME(PSz): don't need to free if lengts are OK
@@ -161,6 +161,10 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
 
     /* print_hex((char *)p->payload, p->len); */
     fprintf(stderr, "\n");
+
+    //TODO(PSz): scion_l3_input() should do it!:
+    scion_addr_set(&current_iphdr_src, src);
+    scion_addr_set(&current_iphdr_dest, dst);
     scion_l3_input(p->payload, p->len);
 }
 

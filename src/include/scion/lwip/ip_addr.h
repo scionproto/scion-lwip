@@ -44,6 +44,7 @@ extern "C" {
 #endif
 
 #define MAX_ADDR_LEN (4 + MAX_HOST_ADDR_LEN)
+#define NO_SVC 0xff
 
 struct scion_addr {
   u8_t addr[MAX_ADDR_LEN];
