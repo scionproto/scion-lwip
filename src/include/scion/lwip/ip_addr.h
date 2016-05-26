@@ -61,12 +61,12 @@ void scion_addr_raw(ip_addr_t *addr, u8_t type, const u8_t *raw_addr);
 void scion_addr_set(ip_addr_t *dst, const ip_addr_t *src);
 
 #define ip_addr_set_any(a) scion_addr_set_any(a)
-void ip_addr_set_any(ip_addr_t *addr);
+void scion_addr_set_any(ip_addr_t *addr);
 
 u32_t ip4_addr_get_u32(const ip_addr_t *addr);
 
 #define ip_addr_cmp(a, b) scion_addr_cmp(a, b)
-int ip_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2);
+int scion_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2);
 int scion_addr_cmp_svc(const ip_addr_t *addr1, const ip_addr_t *addr2, u8_t svc);
 
 #define ip_addr_isany(a) scion_addr_isany(a)

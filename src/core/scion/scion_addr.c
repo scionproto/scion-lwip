@@ -39,7 +39,7 @@ void scion_addr_set(ip_addr_t *dst, const ip_addr_t *src){
     }
 }
 
-void ip_addr_set_any(ip_addr_t *addr){
+void scion_addr_set_any(ip_addr_t *addr){
     addr->type = ANY_ADDR_TYPE;
 }
 
@@ -47,7 +47,7 @@ u32_t ip4_addr_get_u32(const ip_addr_t *addr){
     return *((u32_t *)(addr->addr + 4));
 }
 
-int ip_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2){
+int scion_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2){
     if (addr1 == NULL || addr2 == NULL)
         return (addr1 == addr2);
     if (addr1->type == addr2->type){
