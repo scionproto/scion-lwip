@@ -181,6 +181,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
     LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
     LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
+    fprintf(stderr, "LOOP: %d", pcb->svc);
+    print_scion_addr(&(pcb->remote_ip));
     if (pcb->remote_port == tcphdr->src &&
        pcb->local_port == tcphdr->dest &&
        ip_addr_cmp(&(pcb->remote_ip), &current_iphdr_src) &&
@@ -198,6 +200,25 @@ tcp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
       break;
     }
+#if SCION
+    // Try to find not_acked SVC's PCB.
+    if (scion_addr_cmp_svc(&(pcb->remote_ip), &current_iphdr_src, pcb->svc) &&
+        pcb->local_port == tcphdr->dest){
+        fprintf(stderr, "FOUND NOTACKED SVC's PCB\n");
+        // Found. Setting port and IP of anycast's instance.
+        pcb->remote_port = tcphdr->src;
+        scion_addr_set(&(pcb->remote_ip), &current_iphdr_src);
+
+        LWIP_ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
+        if (prev != NULL) {
+          prev->next = pcb->next;
+          pcb->next = tcp_active_pcbs;
+          tcp_active_pcbs = pcb;
+        }
+        LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
+        break;
+    }
+#endif
     prev = pcb;
   }
 
@@ -242,6 +263,16 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 #endif /* SO_REUSE */
       }
+#if SCION
+      // Try to find SVC listening socket.
+      // TODO(PSz): now takes the first one, should take random. Also
+      // investigate SO_REUSE in the SVC context.
+      if (scion_addr_cmp_svc(&current_iphdr_dest, &(lpcb->local_ip), lpcb->svc)){
+          fprintf(stderr, "FOUND listening SVC ADDR\n");
+          /* found a match */
+          break;
+        }
+#endif
       prev = (struct tcp_pcb *)lpcb;
     }
 #if SO_REUSE
@@ -494,6 +525,11 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     pcb->accepts_pending++;
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
+#if SCION
+    if (pcb->svc != NO_SVC)  // Copy from PCB, as current_iphdr_dest is SVC addr.
+        ip_addr_copy(npcb->local_ip, pcb->local_ip);
+    else
+#endif /* SCION */
     ip_addr_copy(npcb->local_ip, current_iphdr_dest);
     npcb->local_port = pcb->local_port;
     ip_addr_copy(npcb->remote_ip, current_iphdr_src);
