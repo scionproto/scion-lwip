@@ -134,6 +134,7 @@ scion_input(struct pbuf *p, struct netif *inp){
     scion_addr_val(&current_iphdr_src, 1, 2, ADDR_IPV4_TYPE, def_addr);
     scion_addr_val(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr);
 
+    // FIXME(PSz): don't have to alloc, just point
     if (current_path.path != NULL) //FIXME(PSz): don't need to free if lengts are OK
         free(current_path.path);
     char tmp[200];

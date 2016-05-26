@@ -1,5 +1,6 @@
 #include "lwip/ip_addr.h"
 #define ANY_ADDR_TYPE 0xff // PSz: could we reuse NONE for that?
+#define NO_SVC 0xff
 
 int get_haddr_len(int type){
     if (type == ADDR_IPV4_TYPE)
@@ -53,6 +54,15 @@ int ip_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2){
         int len = get_haddr_len(addr1->type);
         return !bcmp(addr1->addr, addr2->addr, 4 + len); 
     }
+    return 0;
+}
+
+int scion_addr_cmp_svc(const ip_addr_t *addr1, const ip_addr_t *addr2, u8_t svc){
+    if (addr1 == NULL || addr2 == NULL)
+        return (addr1 == addr2);
+    if (addr1->type == ADDR_SVC_TYPE && svc != NO_SVC)
+        if (!bcmp(addr1->addr, addr2->addr, 4)) // ISD, AD are ok
+            return (*((u16_t*)(addr1->addr + 4)) == svc);// TODO: SVC should be 1B long.
     return 0;
 }
 
