@@ -721,7 +721,6 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   }
   pcb->remote_port = port;
 
-#if !SCION
   /* check if we have a route to the remote host */
   if (ip_addr_isany(&(pcb->local_ip))) {
     /* no local IP address set, yet. */
@@ -734,10 +733,6 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     /* Use the netif's IP address as local address. */
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
-#else
-    u8_t def_addr[] = {127, 0, 0, 1};
-    scion_addr_val(&(pcb->local_ip), 1, 2, ADDR_IPV4_TYPE, def_addr);
-#endif
 
   old_local_port = pcb->local_port;
   if (pcb->local_port == 0) {

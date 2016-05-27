@@ -1097,7 +1097,6 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* If we don't have a local IP address, we get one by
      calling ip_route(). */
-#if !SCION
   if (ip_addr_isany(&(pcb->local_ip))) {
     netif = ip_route(&(pcb->remote_ip));
     if (netif == NULL) {
@@ -1105,7 +1104,6 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     }
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
-#endif
 
   if (pcb->rttest == 0) {
     pcb->rttest = tcp_ticks;

@@ -73,6 +73,7 @@ void print_hex(char *buf, int len);
 void print_scion_addr(ip_addr_t *addr){
     int len = get_haddr_len(addr->type);
     u32_t isd_as = ntohl(*((u32_t *)(addr->addr))); 
-    fprintf(stderr, "(%d,%d), type:%d ", ISD(isd_as), AS(isd_as), addr->type);
+    fprintf(stderr, "(%d,%d,", ISD(isd_as), AS(isd_as), addr->type);
     print_hex(addr->addr + 4, len);
+    fprintf(stderr, ")\n");
 }

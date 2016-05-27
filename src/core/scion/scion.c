@@ -80,8 +80,6 @@ void print_hex(char *buf, int len){
     int i;
     for (i=0; i<len; i++)
         fprintf(stderr, "\\x%02x", buf[i]);
-    fprintf(stderr, "\n");
-
 }
 
 err_t 
@@ -111,7 +109,7 @@ void
 scion_l3_input(u8_t *buf, int len){
     struct pbuf *p = pbuf_alloc(PBUF_IP, len, PBUF_RAM);
     MEMCPY(p->payload, buf, len);
-
+    printf("SCION_L3_INPUT(%dB):", len); 
     tcpip_input(p, (struct netif *)NULL);
     /* pbuf_free(p); */ //FIXME(PSz): doublecheck if TCP processing releases it
 }
@@ -144,7 +142,12 @@ scion_input(struct pbuf *p, struct netif *inp){
     memcpy(current_path.path, tmp, current_path.len);
     conn_counter++;
 
-    fprintf(stderr, "tcp_input() called\n");
+/// Addresses
+    u8_t *ptmp = p->payload;
+    scion_addr_raw(&current_iphdr_src, ptmp[0], ptmp + 1);
+    ptmp += 1 + MAX_ADDR_LEN;
+    scion_addr_raw(&current_iphdr_dest, ptmp[0], ptmp + 1);
+//
     tcp_input(p, inp);
     return ERR_OK;
 }
@@ -153,18 +156,28 @@ err_t
 scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
              exts_t *exts, u8_t proto){
     add_scion_header(p, src, dst);
-    fprintf(stderr, "scion_output() %lu->%lu (%dB):\n", *(u32_t *)src, *(u32_t *)dst, p->len);
+
+    fprintf(stderr, "scion_output() called\n");
+      print_scion_addr(src);
+      print_scion_addr(dst);
     if (path != NULL)
         fprintf(stderr, "PATH(%dB): %.*s\n", path->len, path->len, (char*)path->path);
     else
         fprintf(stderr, "PATH is NULL\n");
-
-    /* print_hex((char *)p->payload, p->len); */
     fprintf(stderr, "\n");
 
-    //TODO(PSz): scion_l3_input() should do it!:
-    scion_addr_set(&current_iphdr_src, src);
-    scion_addr_set(&current_iphdr_dest, dst);
-    scion_l3_input(p->payload, p->len);
+// Add addresses to the packet
+    u8_t buf[2 + 2*MAX_ADDR_LEN + p->len], *ptmp;
+    ptmp = buf;
+    ptmp[0] = src->type;
+    ptmp++;
+    memcpy(ptmp, src->addr, MAX_ADDR_LEN);
+    ptmp+=MAX_ADDR_LEN;
+    ptmp[0] = dst->type;
+    ptmp++;
+    memcpy(ptmp, dst->addr, MAX_ADDR_LEN);
+    ptmp+=MAX_ADDR_LEN;
+    memcpy(ptmp, p->payload, p->len);
+    scion_l3_input(buf, 2 + 2*MAX_ADDR_LEN + p->len);
 }
 

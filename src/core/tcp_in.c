@@ -110,7 +110,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 #else
   /* iphdr = (struct ip_hdr *)p->payload; */ // HERE SCION HEADER
-  tcphdr = (struct tcp_hdr *)((u8_t *)p->payload); //here jump to l4
+  tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + (2 + 2*MAX_ADDR_LEN)); //here jump to l4
 #endif
 
 #if TCP_INPUT_DEBUG
@@ -120,14 +120,15 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #if !SCION
   /* remove header from payload */
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
+#else
+  if (pbuf_header(p, -(2 + 2*MAX_ADDR_LEN)) || (p->tot_len < sizeof(struct tcp_hdr))) {
+#endif
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
     TCP_STATS_INC(tcp.lenerr);
     goto dropped;
   }
-#else
   // here truncate buf basing on SCION's hdr_len
-#endif
 
   /* Don't even process incoming broadcasts/multicasts. */
   if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||
@@ -140,6 +141,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Verify TCP checksum. */
   if (inet_chksum_pseudo(p, ip_current_src_addr(), ip_current_dest_addr(),
       IP_PROTO_TCP, p->tot_len) != 0) {
+      print_scion_addr(ip_current_src_addr());
+      print_scion_addr(ip_current_dest_addr());
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
         inet_chksum_pseudo(p, ip_current_src_addr(), ip_current_dest_addr(),
       IP_PROTO_TCP, p->tot_len)));
@@ -181,8 +184,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
     LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
     LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
-    fprintf(stderr, "LOOP: %d", pcb->svc);
-    print_scion_addr(&(pcb->remote_ip));
+    fprintf(stderr, "LOOP-ACTIVE: svc:%d", pcb->svc);
+    print_scion_addr(&(pcb->local_ip));
     if (pcb->remote_port == tcphdr->src &&
        pcb->local_port == tcphdr->dest &&
        ip_addr_cmp(&(pcb->remote_ip), &current_iphdr_src) &&
@@ -205,9 +208,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
     if (scion_addr_cmp_svc(&(pcb->remote_ip), &current_iphdr_src, pcb->svc) &&
         pcb->local_port == tcphdr->dest){
         fprintf(stderr, "FOUND NOTACKED SVC's PCB\n");
+    fprintf(stderr, "before addr:%d", pcb->svc);
+    print_scion_addr(&(pcb->local_ip));
         // Found. Setting port and IP of anycast's instance.
         pcb->remote_port = tcphdr->src;
         scion_addr_set(&(pcb->remote_ip), &current_iphdr_src);
+    fprintf(stderr, "after addr:%d", pcb->svc);
+    print_scion_addr(&(pcb->local_ip));
 
         LWIP_ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
         if (prev != NULL) {
@@ -227,6 +234,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
        in the TIME-WAIT state. */
     for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
+    fprintf(stderr, "LOOP-WAIT: svc:%d", pcb->svc);
+    print_scion_addr(&(pcb->local_ip));
       if (pcb->remote_port == tcphdr->src &&
          pcb->local_port == tcphdr->dest &&
          ip_addr_cmp(&(pcb->remote_ip), &current_iphdr_src) &&
@@ -245,6 +254,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
        are LISTENing for incoming connections. */
     prev = NULL;
     for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+    fprintf(stderr, "LOOP-LISTEN: svc:%d", lpcb->svc);
+    print_scion_addr(&(lpcb->local_ip));
       if (lpcb->local_port == tcphdr->dest) {
 #if SO_REUSE
         if (ip_addr_cmp(&(lpcb->local_ip), &current_iphdr_dest)) {
@@ -269,6 +280,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
       // investigate SO_REUSE in the SVC context.
       if (scion_addr_cmp_svc(&current_iphdr_dest, &(lpcb->local_ip), lpcb->svc)){
           fprintf(stderr, "FOUND listening SVC ADDR\n");
+    fprintf(stderr, "svc:%d", lpcb->svc);
+    print_scion_addr(&(lpcb->local_ip));
           /* found a match */
           break;
         }
