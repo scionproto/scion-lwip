@@ -107,7 +107,7 @@ add_scion_header(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest)
 
 void 
 scion_l3_input(u8_t *buf, int len){
-    struct pbuf *p = pbuf_alloc(PBUF_IP, len, PBUF_RAM);
+    struct pbuf *p = pbuf_alloc(PBUF_RAW, len, PBUF_RAM);
     MEMCPY(p->payload, buf, len);
     printf("SCION_L3_INPUT(%dB):", len); 
     tcpip_input(p, (struct netif *)NULL);
