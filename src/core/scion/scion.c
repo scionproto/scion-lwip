@@ -143,6 +143,7 @@ scion_input(struct pbuf *p, struct netif *inp){
     conn_counter++;
 
 /// Addresses
+//  FIXME(PSz): bzero() is required by checksum computed over SVC addr.
     bzero(current_iphdr_src.addr, MAX_ADDR_LEN);
     bzero(current_iphdr_dest.addr, MAX_ADDR_LEN);
     u8_t *ptmp = p->payload;
