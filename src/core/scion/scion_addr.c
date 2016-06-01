@@ -56,12 +56,12 @@ int scion_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2){
     return 0;
 }
 
-int scion_addr_cmp_svc(const ip_addr_t *addr1, const ip_addr_t *addr2, u8_t svc){
+int scion_addr_cmp_svc(const ip_addr_t *addr1, const ip_addr_t *addr2, u16_t svc){
     if (addr1 == NULL || addr2 == NULL)
         return (addr1 == addr2);
     if (addr1->type == ADDR_SVC_TYPE && svc != NO_SVC)
         if (!bcmp(addr1->addr, addr2->addr, 4)) // ISD, AD are ok
-            return (ntohs(*((u16_t*)(addr1->addr + 4))) == svc);// TODO: SVC should be 1B long.
+            return (ntohs(*((u16_t*)(addr1->addr + 4))) == svc);
     return 0;
 }
 

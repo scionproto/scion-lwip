@@ -68,7 +68,7 @@ u32_t ip4_addr_get_u32(const ip_addr_t *addr);
 
 #define ip_addr_cmp(a, b) scion_addr_cmp(a, b)
 int scion_addr_cmp(const ip_addr_t *addr1, const ip_addr_t *addr2);
-int scion_addr_cmp_svc(const ip_addr_t *addr1, const ip_addr_t *addr2, u8_t svc);
+int scion_addr_cmp_svc(const ip_addr_t *addr1, const ip_addr_t *addr2, u16_t svc);
 
 #define ip_addr_isany(a) scion_addr_isany(a)
 int scion_addr_isany(const ip_addr_t *addr);

@@ -84,7 +84,7 @@ typedef struct scion_exts exts_t;
    /* SCION Extensions */ \
   exts_t *exts; \
   /* SVC Addr */ \
-  u8_t svc;
+  u16_t svc;
 
 struct ip_pcb {
 /* Common members of all PCB types */
