@@ -105,9 +105,9 @@ struct ip_pcb {
 #define SOF_INHERITED   (SOF_REUSEADDR|SOF_KEEPALIVE|SOF_LINGER/*|SOF_DEBUG|SOF_DONTROUTE|SOF_OOBINLINE*/)
 
 
-/** Source IP address of current_header */
+/** Source SCION address of current_header */
 extern ip_addr_t current_iphdr_src;
-/** Destination IP address of current_header */
+/** Destination SCION address of current_header */
 extern ip_addr_t current_iphdr_dest;
 /**  SCION path of current_header */
 extern spath_t current_path; 
@@ -121,9 +121,9 @@ err_t scion_input(struct pbuf *p, struct netif *inp);
 #define ip_input(a, b) scion_input(a, b)
 err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, 
                    spath_t *path, exts_t *exts, u8_t proto);
-/** Source IP address of current_header */
+/** Source SCION address of current_header */
 #define ip_current_src_addr()  (&current_iphdr_src)
-/** Destination IP address of current_header */
+/** Destination SCION address of current_header */
 #define ip_current_dest_addr() (&current_iphdr_dest)
 
 /** Gets an IP pcb option (SOF_* flags) */
