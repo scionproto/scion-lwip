@@ -55,6 +55,9 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 #include "arch/perf.h"
+#if SCION
+#include "libscion/packet.h"
+#endif
 
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
@@ -109,8 +112,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 #else
-  /* iphdr = (struct ip_hdr *)p->payload; */ // HERE SCION HEADER
-  tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + (2 + 2*MAX_ADDR_LEN)); //here jump to l4
+  spkt_t *spkt = parse_spkt(p->payload);
+  u16_t len_up_to_l4 = ntohs(spkt->sch->total_len) - spkt->l4->len;
+  tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + len_up_to_l4);
+  destroy_spkt(spkt, 1);
 #endif
 
 #if TCP_INPUT_DEBUG
@@ -121,7 +126,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* remove header from payload */
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
 #else
-  if (pbuf_header(p, -(2 + 2*MAX_ADDR_LEN)) || (p->tot_len < sizeof(struct tcp_hdr))) {
+  if (pbuf_header(p, -len_up_to_l4) || (p->tot_len < sizeof(struct tcp_hdr))) {
 #endif
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
