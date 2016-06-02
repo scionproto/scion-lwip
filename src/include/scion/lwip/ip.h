@@ -60,22 +60,9 @@
 extern "C" {
 #endif
 
-struct scion_ext_hdr {
-    u8_t len;
-    u8_t class_;
-    u8_t type;
-    u8_t *payload;
-};
-typedef struct scion_ext_hdr seh_t;
-
-struct scion_exts {
-    u8_t number;
-    seh_t *extensions;
-};
-typedef struct scion_exts exts_t;
-//
-
 #define IP_HLEN 20
+#define UDP_HLEN 8
+#define SCION_DEFAULT_MTU (1500 - IP_HLEN - UDP_HLEN)
 #define IP_PROTO_TCP     6
 
 /* This is the common part of all PCB types. It needs to be at the

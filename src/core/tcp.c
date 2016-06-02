@@ -1635,7 +1635,7 @@ tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr)
     mss_s = outif->mtu - IP_HLEN - TCP_HLEN;
 #else
     {
-    mss_s = 1500 - IP_HLEN - TCP_HLEN;
+    mss_s = SCION_DEFAULT_MTU - TCP_HLEN;
 #endif
     /* RFC 1122, chap 4.2.2.6:
      * Eff.snd.MSS = min(SendMSS+20, MMS_S) - TCPhdrsize - IPoptionsize
