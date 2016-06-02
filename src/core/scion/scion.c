@@ -31,9 +31,9 @@
 #include "lwip/tcpip.h"
 #include "libscion/packet.h"
 
-/** Source IP address of current_header */
+/** Source SCION address of current_header */
 ip_addr_t current_iphdr_src;
-/** Destination IP address of current_header */
+/** Destination SCION address of current_header */
 ip_addr_t current_iphdr_dest;
 /**  SCION path of current_header */
 spath_t current_path = {.raw_path = NULL};
