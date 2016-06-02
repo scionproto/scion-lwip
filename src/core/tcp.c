@@ -1585,7 +1585,7 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   }
 #if SCION
   if (pcb->path != NULL){
-      free(pcb->path->path);
+      free(pcb->path->raw_path);
       free(pcb->path);
       fprintf(stderr, "Freeing path in tcp_pcb_remove()\n");
   }

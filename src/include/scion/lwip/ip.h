@@ -54,17 +54,11 @@
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 #include "lwip/netif.h"
+#include "libscion/packet.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// SCION part
-struct scion_path {
-    u8_t *path; // FIXME(PSz): rename it to raw
-    u16_t len; // in bytes
-};
-typedef struct scion_path spath_t;
 
 struct scion_ext_hdr {
     u8_t len;

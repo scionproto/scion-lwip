@@ -555,8 +555,8 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
 #if SCION
     spath_t *path = malloc(sizeof *path);
-    path->path = malloc(current_path.len);
-    memcpy(path->path, current_path.path, current_path.len);
+    path->raw_path = malloc(current_path.len);
+    memcpy(path->raw_path, current_path.raw_path, current_path.len);
     path->len = current_path.len;
     npcb->path = path;
 #endif

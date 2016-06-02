@@ -29,27 +29,18 @@
 #include "lwip/stats.h"
 #include "arch/perf.h"
 #include "lwip/tcpip.h"
+#include "libscion/packet.h"
 
 /** Source IP address of current_header */
 ip_addr_t current_iphdr_src;
 /** Destination IP address of current_header */
 ip_addr_t current_iphdr_dest;
 /**  SCION path of current_header */
-spath_t current_path = {.path = NULL};
+spath_t current_path = {.raw_path = NULL};
 /**  SCION extensions of current_header */
 exts_t current_exts;
+// FIXME(PSz): debug only
 int conn_counter = 0;
-
-
-err_t get_path(u16_t isd, u32_t as, spath_t *p){
-    // validate isd,as and get path
-    // caller has to remember to free(p->path);
-    int plen = 24;
-    p->path = malloc(plen);
-    memcpy(p->path, "012345678901234567890123", plen);
-    p->len = plen;
-    return ERR_OK;
-}
 
 void print_hex(char *buf, int len){
     int i;
@@ -57,38 +48,21 @@ void print_hex(char *buf, int len){
         fprintf(stderr, "\\x%02x", buf[i]);
 }
 
-err_t 
+err_t
 add_scion_header(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest)
 {
   /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
      gets altered as the packet is passed down the stack */
     LWIP_ASSERT("p->ref == 1", p->ref == 1);
-
-    //here call get_path etc...
-
-
-  /* Should the IP header be generated or is it already included in p? */
-    /* u16_t ip_hlen = IP_HLEN; */
-    /* generate IP header */
-    /* if (pbuf_header(p, IP_HLEN)) { */
-    /*   LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_output: not enough room for IP header in pbuf\n")); */
-    /*   return ERR_BUF; */
-    /* } */
-
-    /* iphdr = (struct ip_hdr *)p->payload; */
-    /* LWIP_ASSERT("check that first pbuf can hold struct ip_hdr", */
-    /*            (p->len >= sizeof(struct ip_hdr))); */
 }
 
-void 
+void
 scion_l3_input(u8_t *buf, int len){
     struct pbuf *p = pbuf_alloc(PBUF_RAW, len, PBUF_RAM);
     MEMCPY(p->payload, buf, len);
-    printf("SCION_L3_INPUT(%dB):", len); 
+    printf("SCION_L3_INPUT(%dB):", len);
     tcpip_input(p, (struct netif *)NULL);
-    /* pbuf_free(p); */ //FIXME(PSz): doublecheck if TCP processing releases it
 }
-/////////////////////////////////////////////////////////////////////////
 
 struct netif *
 scion_route(ip_addr_t *dest)
@@ -108,13 +82,13 @@ scion_input(struct pbuf *p, struct netif *inp){
     /* scion_addr_val(&current_iphdr_dest, 1, 2, ADDR_IPV4_TYPE, def_addr); */
 
     // FIXME(PSz): don't have to alloc, just point
-    if (current_path.path != NULL) //FIXME(PSz): don't need to free if lengts are OK
-        free(current_path.path);
+    if (current_path.raw_path != NULL) //FIXME(PSz): don't need to free if lengts are OK
+        free(current_path.raw_path);
     char tmp[200];
     sprintf(tmp, "%s%d", "REVERSED", conn_counter);
     current_path.len = strlen(tmp);
-    current_path.path = malloc(current_path.len);
-    memcpy(current_path.path, tmp, current_path.len);
+    current_path.raw_path = malloc(current_path.len);
+    memcpy(current_path.raw_path, tmp, current_path.len);
     conn_counter++;
 
 /// Addresses
@@ -139,7 +113,7 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
       print_scion_addr(src);
       print_scion_addr(dst);
     if (path != NULL)
-        fprintf(stderr, "PATH(%dB): %.*s\n", path->len, path->len, (char*)path->path);
+        fprintf(stderr, "PATH(%dB): %.*s\n", path->len, path->len, (char*)path->raw_path);
     else
         fprintf(stderr, "PATH is NULL\n");
     fprintf(stderr, "\n");
