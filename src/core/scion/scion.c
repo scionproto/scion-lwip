@@ -36,11 +36,10 @@ ip_addr_t current_iphdr_src;
 /** Destination SCION address of current_header */
 ip_addr_t current_iphdr_dest;
 /**  SCION path of current_header */
-spath_t current_path = {.raw_path = NULL};
+spath_t current_path = {.raw_path = NULL, .len = 0};
 /**  SCION extensions of current_header */
 exts_t current_exts;
 // FIXME(PSz): debug only
-int conn_counter = 0;
 
 void print_hex(char *buf, int len){
     int i;
@@ -75,19 +74,23 @@ scion_input(struct pbuf *p, struct netif *inp){
     scion_addr_set(&current_iphdr_src, spkt->src);
     scion_addr_set(&current_iphdr_dest, spkt->dst);
     // Path:
-    // FIXME(PSz): don't have to alloc, just point
-    if (current_path.raw_path != NULL) //FIXME(PSz): don't need to free if lengts are OK
-        free(current_path.raw_path);
-    char tmp[200];
-    sprintf(tmp, "%s%d", "REVERSEDREVERSED", conn_counter);
-    current_path.len = strlen(tmp);
-    current_path.raw_path = malloc(current_path.len);
-    memcpy(current_path.raw_path, tmp, current_path.len);
-    conn_counter++;
+    // FIXME(PSz): don't have to alloc/free if already allocated space is ok.
+    // Use realloc() or just have a static buffer.
+    if (spkt->path){
+        current_path.raw_path = malloc(spkt->path->len);
+        current_path.len = spkt->path->len;
+        sprintf(current_path.raw_path, "%s", "REVERSEDREVERSED");
+    }
     // TODO(PSz): extensions
-    destroy_spkt(spkt, 1);
 
     tcp_input(p, inp);
+
+    destroy_spkt(spkt, 1);
+    if (current_path.raw_path) {
+        free(current_path.raw_path);
+        current_path.raw_path = NULL;
+        current_path.len = 0;
+    }
     return ERR_OK;
 }
 

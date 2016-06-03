@@ -77,7 +77,7 @@ extern "C" {
   u8_t so_options;      \
    /* SCION Path */ \
   spath_t *path;    \
-   /* SCION Extensions */ \
+   /* SCION Extensions, TODO(PSz): that should be exts_ctx_t.*/ \
   exts_t *exts; \
   /* SVC Addr */ \
   u16_t svc;
