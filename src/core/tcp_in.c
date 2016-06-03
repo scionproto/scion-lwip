@@ -112,8 +112,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 #else
-  spkt_t *spkt = parse_spkt(p->payload);
-  u16_t len_up_to_l4 = ntohs(spkt->sch->total_len) - spkt->l4->len;
+  int sin_size = sizeof(struct sockaddr_in);
+  spkt_t *spkt = parse_spkt(p->payload + sin_size);
+  u16_t len_up_to_l4 = sin_size + ntohs(spkt->sch->total_len) - spkt->l4->len;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + len_up_to_l4);
   destroy_spkt(spkt, 1);
 #endif

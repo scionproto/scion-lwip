@@ -66,7 +66,9 @@ scion_route(ip_addr_t *dest)
 err_t
 scion_input(struct pbuf *p, struct netif *inp){
     fprintf(stderr, "scion_input() called (%dB)\n", p->len);
-    spkt_t *spkt = parse_spkt(p->payload);
+    /* Packet from TCP queue: [from (sockaddr_in) || raw_spkt] */
+    int sin_size = sizeof(struct sockaddr_in);
+    spkt_t *spkt = parse_spkt(p->payload + sin_size);
     // Addresses:
     // FIXME(PSz): bzero() is required by checksum computed over SVC addr.
     bzero(current_iphdr_src.addr, MAX_ADDR_LEN);
@@ -74,6 +76,7 @@ scion_input(struct pbuf *p, struct netif *inp){
     scion_addr_set(&current_iphdr_src, spkt->src);
     scion_addr_set(&current_iphdr_dest, spkt->dst);
     // Path:
+    memcpy(&current_path.first_hop, p->payload, sin_size);
     // FIXME(PSz): don't have to alloc/free if already allocated space is ok.
     // Use realloc() or just have a static buffer.
     if (spkt->path){
@@ -108,9 +111,11 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     tcp_data.payload = p->payload;
 
     spkt_t *spkt = build_spkt(src, dst, path, exts, &tcp_data);
-    u16_t total_len = ntohs(spkt->sch->total_len);
-    u8_t packed[total_len];
-    if (pack_spkt(spkt, packed, total_len)){
+    int sin_size = sizeof(struct sockaddr_in);
+    u16_t spkt_len = ntohs(spkt->sch->total_len);
+    u8_t packed[sin_size + spkt_len];
+
+    if (pack_spkt(spkt, packed + sin_size, spkt_len)){
         fprintf(stderr, "pack_sptk() failed\n");
         return ERR_VAL;
     }
@@ -118,7 +123,7 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     free(spkt->sch);
     free(spkt);
 
-    scion_l3_input(packed, total_len);
+    scion_l3_input(packed, sin_size + spkt_len);
     return ERR_OK;
 }
 
