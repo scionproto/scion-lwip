@@ -2057,7 +2057,7 @@
  * TCP_RST_DEBUG: Enable debugging for TCP with the RST message.
  */
 #ifndef TCP_RST_DEBUG
-#define TCP_RST_DEBUG                   LWIP_DBG_ON
+#define TCP_RST_DEBUG                   LWIP_DBG_OFF
 #endif
 
 /**
