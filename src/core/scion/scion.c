@@ -41,7 +41,7 @@ spath_t current_path = {.raw_path = NULL, .len = 0};
 exts_t current_exts;
 
 // FIXME(PSz): debug only
-void print_hex(char *buf, int len){
+void print_hex(u8_t *buf, int len){
     int i;
     for (i=0; i<len; i++)
         fprintf(stderr, "\\x%02x", buf[i]);
