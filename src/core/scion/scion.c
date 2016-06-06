@@ -81,7 +81,10 @@ scion_input(struct pbuf *p, struct netif *inp){
     if (spkt->path){
         current_path.raw_path = malloc(spkt->path->len);
         current_path.len = spkt->path->len;
-        sprintf(current_path.raw_path, "%s", "REVERSEDREVERSED");
+        reverse_path(spkt->path->raw_path, current_path.raw_path);
+    }
+    else{
+        current_path.len = 0;
     }
     // TODO(PSz): extensions
 
