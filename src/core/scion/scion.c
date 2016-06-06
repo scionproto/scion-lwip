@@ -113,6 +113,9 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
         fprintf(stderr, "pack_sptk() failed\n");
         return ERR_VAL;
     }
+    // Set OF indexes.
+    init_of_idx(packed);
+
     // Send it through SCION overlay.
     tcp_scion_output(packed, spkt_len, &path->first_hop);
 
