@@ -74,7 +74,7 @@ scion_input(struct pbuf *p, struct netif *inp){
     if (spkt->path){
         current_path.raw_path = malloc(spkt->path->len);
         current_path.len = spkt->path->len;
-        reverse_path(spkt->path->raw_path, current_path.raw_path);
+        reverse_path(p->payload + sin_size, current_path.raw_path);
     }
     else{
         current_path.len = 0;
