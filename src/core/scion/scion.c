@@ -40,20 +40,13 @@ spath_t current_path = {.raw_path = NULL, .len = 0};
 /**  SCION extensions of current_header */
 exts_t current_exts;
 
+// FIXME(PSz): debug only
 void print_hex(char *buf, int len){
     int i;
     for (i=0; i<len; i++)
         fprintf(stderr, "\\x%02x", buf[i]);
 }
 
-/* void */
-/* scion_l3_input(u8_t *buf, int len){ */
-/*     struct pbuf *p = pbuf_alloc(PBUF_RAW, len, PBUF_RAM); */
-/*     MEMCPY(p->payload, buf, len); */
-/*     printf("SCION_L3_INPUT(%dB):", len); */
-/*     tcpip_input(p, (struct netif *)NULL); */
-/* } */
-/*  */
 struct netif *
 scion_route(ip_addr_t *dest)
 {
