@@ -39,7 +39,6 @@ ip_addr_t current_iphdr_dest;
 spath_t current_path = {.raw_path = NULL, .len = 0};
 /**  SCION extensions of current_header */
 exts_t current_exts;
-// FIXME(PSz): debug only
 
 void print_hex(char *buf, int len){
     int i;
@@ -47,14 +46,14 @@ void print_hex(char *buf, int len){
         fprintf(stderr, "\\x%02x", buf[i]);
 }
 
-void
-scion_l3_input(u8_t *buf, int len){
-    struct pbuf *p = pbuf_alloc(PBUF_RAW, len, PBUF_RAM);
-    MEMCPY(p->payload, buf, len);
-    printf("SCION_L3_INPUT(%dB):", len);
-    tcpip_input(p, (struct netif *)NULL);
-}
-
+/* void */
+/* scion_l3_input(u8_t *buf, int len){ */
+/*     struct pbuf *p = pbuf_alloc(PBUF_RAW, len, PBUF_RAM); */
+/*     MEMCPY(p->payload, buf, len); */
+/*     printf("SCION_L3_INPUT(%dB):", len); */
+/*     tcpip_input(p, (struct netif *)NULL); */
+/* } */
+/*  */
 struct netif *
 scion_route(ip_addr_t *dest)
 {
@@ -111,19 +110,19 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     tcp_data.payload = p->payload;
 
     spkt_t *spkt = build_spkt(src, dst, path, exts, &tcp_data);
-    int sin_size = sizeof(struct sockaddr_in);
     u16_t spkt_len = ntohs(spkt->sch->total_len);
-    u8_t packed[sin_size + spkt_len];
+    u8_t packed[spkt_len];
 
-    if (pack_spkt(spkt, packed + sin_size, spkt_len)){
+    if (pack_spkt(spkt, packed, spkt_len)){
         fprintf(stderr, "pack_sptk() failed\n");
         return ERR_VAL;
     }
+    // Send it through SCION overlay.
+    tcp_scion_output(packed, spkt_len, &path->first_hop);
+
     // Free sch and spkt allocated with build_spkt().
     free(spkt->sch);
     free(spkt);
-
-    scion_l3_input(packed, sin_size + spkt_len);
     return ERR_OK;
 }
 
