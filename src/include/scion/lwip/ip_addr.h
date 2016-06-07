@@ -56,8 +56,6 @@ int scion_addr_isany(const saddr_t *addr);
 #define ip_addr_isbroadcast(ipaddr, netif) 0
 #define ip_addr_ismulticast(addr1) 0
 
-void print_scion_addr(saddr_t *addr);
-
 #ifdef __cplusplus
 }
 #endif

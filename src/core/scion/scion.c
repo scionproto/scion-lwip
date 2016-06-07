@@ -40,13 +40,6 @@ spath_t current_path = {.raw_path = NULL, .len = 0};
 /**  SCION extensions of current_header */
 exts_t current_exts;
 
-// FIXME(PSz): debug only
-void print_hex(u8_t *buf, int len){
-    int i;
-    for (i=0; i<len; i++)
-        fprintf(stderr, "\\x%02x", buf[i]);
-}
-
 struct netif *
 scion_route(ip_addr_t *dest)
 {
