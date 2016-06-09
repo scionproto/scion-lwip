@@ -42,9 +42,6 @@
 #include "lwip/sys.h"
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
-#if SCION
-#include "lwip/ip.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

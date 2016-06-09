@@ -55,7 +55,7 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 #include "arch/perf.h"
-#if SCION
+#ifdef SCION
 #include "libscion/packet.h"
 #endif
 
@@ -108,7 +108,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   TCP_STATS_INC(tcp.recv);
   snmp_inc_tcpinsegs();
 
-#if !SCION
+#ifndef SCION
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 #else
@@ -121,7 +121,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   tcp_debug_print(tcphdr);
 #endif
 
-#if !SCION
+#ifndef SCION
   /* remove header from payload */
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
 #else
@@ -203,7 +203,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
       break;
     }
-#if SCION
+#ifdef SCION
     // Try to find not_acked SVC's PCB.
     if (scion_addr_cmp_svc(&(pcb->remote_ip), &current_iphdr_src, pcb->svc) &&
         pcb->local_port == tcphdr->dest){
@@ -265,7 +265,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 #endif /* SO_REUSE */
       }
-#if SCION
+#ifdef SCION
       // Try to find SVC listening socket.
       // TODO(PSz): now takes the first one, should take random. Also
       // investigate SO_REUSE in the SVC context.
@@ -451,7 +451,7 @@ aborted:
       TCP_STATS_INC(tcp.drop);
       tcp_rst(ackno, seqno + tcplen,
         ip_current_dest_addr(), ip_current_src_addr(),
-#if !SCION
+#ifndef SCION
         tcphdr->dest, tcphdr->src);
 #else
         tcphdr->dest, tcphdr->src, &current_path, &current_exts);
@@ -499,7 +499,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
        RST. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
     tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
-#if !SCION
+#ifndef SCION
       ip_current_src_addr(), tcphdr->dest, tcphdr->src);
 #else
       ip_current_src_addr(), tcphdr->dest, tcphdr->src, &current_path, &current_exts);
@@ -525,7 +525,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     pcb->accepts_pending++;
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
-#if SCION
+#ifdef SCION
     if (pcb->svc != NO_SVC)  // Copy from PCB, as current_iphdr_dest is SVC addr.
         ip_addr_copy(npcb->local_ip, pcb->local_ip);
     else
@@ -557,7 +557,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->mss = tcp_eff_send_mss(npcb->mss, &(npcb->remote_ip));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
-#if SCION
+#ifdef SCION
     spath_t *path = malloc(sizeof *path);
     path->raw_path = malloc(current_path.len);
     memcpy(path->raw_path, current_path.raw_path, current_path.len);
@@ -608,7 +608,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
     if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {
       /* If the SYN is in the window it is an error, send a reset */
       tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
-#if !SCION
+#ifndef SCION
         tcphdr->dest, tcphdr->src);
 #else
         tcphdr->dest, tcphdr->src, &current_path, &current_exts);
@@ -746,7 +746,7 @@ tcp_process(struct tcp_pcb *pcb)
     else if (flags & TCP_ACK) {
       /* send a RST to bring the other side in a non-synchronized state. */
       tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
-#if !SCION
+#ifndef SCION
         tcphdr->dest, tcphdr->src);
 #else
         tcphdr->dest, tcphdr->src, &current_path, &current_exts);
@@ -793,7 +793,7 @@ tcp_process(struct tcp_pcb *pcb)
       } else {
         /* incorrect ACK number, send RST */
         tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
-#if !SCION
+#ifndef SCION
                 tcphdr->dest, tcphdr->src);
 #else
                 tcphdr->dest, tcphdr->src, pcb->path, pcb->exts);

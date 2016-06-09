@@ -296,7 +296,7 @@ lwip_init(void)
   mem_init();
   memp_init();
   pbuf_init();
-#if !SCION
+#ifndef SCION
   netif_init();
 #endif /* SCION */
 #if LWIP_SOCKET

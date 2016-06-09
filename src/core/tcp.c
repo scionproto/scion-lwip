@@ -180,7 +180,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
       /* don't call tcp_abort here: we must not deallocate the pcb since
          that might not be expected when calling tcp_close */
       tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
-#if !SCION
+#ifndef SCION
         pcb->local_port, pcb->remote_port);
 #else
         pcb->local_port, pcb->remote_port, pcb->path, pcb->exts);
@@ -397,7 +397,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     if (reset) {
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
       tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port
-#if !SCION
+#ifndef SCION
         );
 #else
         , pcb->path, pcb->exts);
@@ -488,7 +488,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   }
 
   if (!ip_addr_isany(ipaddr)) {
-#if !SCION
+#ifndef SCION
     pcb->local_ip = *ipaddr;
 #else
     scion_addr_set(&pcb->local_ip, ipaddr);
@@ -565,7 +565,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->prio = pcb->prio;
   lpcb->so_options = pcb->so_options;
   ip_set_option(lpcb, SOF_ACCEPTCONN);
-#if SCION
+#ifdef SCION
   lpcb->path = pcb->path;
   lpcb->exts = pcb->exts;
   lpcb->svc = pcb->svc;
@@ -711,7 +711,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
   if (ipaddr != NULL) {
-#if !SCION
+#ifndef SCION
     pcb->remote_ip = *ipaddr;
 #else
     scion_addr_set(&pcb->remote_ip, ipaddr);
@@ -921,7 +921,7 @@ tcp_slowtmr_start:
       if((u32_t)(tcp_ticks - pcb->tmr) >
          (pcb->keep_idle + TCP_KEEP_DUR(pcb)) / TCP_SLOW_INTERVAL)
       {
-#if !SCION
+#ifndef SCION
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
                                 ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
                                 ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
@@ -986,7 +986,7 @@ tcp_slowtmr_start:
 
       if (pcb_reset) {
         tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
-#if !SCION
+#ifndef SCION
           pcb->local_port, pcb->remote_port);
 #else
           pcb->local_port, pcb->remote_port, pcb->path, pcb->exts);
@@ -1339,7 +1339,7 @@ tcp_alloc(u8_t prio)
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
     pcb->rcv_ann_wnd = TCP_WND;
-#if SCION
+#ifdef SCION
     pcb->path = NULL;
     pcb->exts = NULL;
     pcb->svc = NO_SVC;
@@ -1583,7 +1583,7 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
     pcb->flags |= TF_ACK_NOW;
     tcp_output(pcb);
   }
-#if SCION
+#ifdef SCION
   if (pcb->path != NULL){
       free(pcb->path->raw_path);
       free(pcb->path);
@@ -1629,7 +1629,7 @@ tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr)
 {
   u16_t mss_s;
   struct netif *outif;
-#if !SCION
+#ifndef SCION
   outif = ip_route(addr);
   if ((outif != NULL) && (outif->mtu != 0)) {
     mss_s = outif->mtu - IP_HLEN - TCP_HLEN;

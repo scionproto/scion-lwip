@@ -876,11 +876,11 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
         IP_PROTO_TCP, p->tot_len);
 #endif
 
-#if LWIP_NETIF_HWADDRHINT
+#ifdef SCION
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
-#elif SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
@@ -1165,11 +1165,11 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 #endif /* CHECKSUM_GEN_TCP */
   TCP_STATS_INC(tcp.xmit);
 
-#if LWIP_NETIF_HWADDRHINT
+#ifdef SCION
+  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
-#elif SCION
-  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
@@ -1199,7 +1199,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 void
 tcp_rst(u32_t seqno, u32_t ackno,
   ip_addr_t *local_ip, ip_addr_t *remote_ip,
-#if !SCION
+#ifndef SCION
   u16_t local_port, u16_t remote_port)
 #else
   u16_t local_port, u16_t remote_port, spath_t *path, exts_t *exts)
@@ -1232,7 +1232,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   TCP_STATS_INC(tcp.xmit);
   snmp_inc_tcpoutrsts();
    /* Send output with hardcoded TTL since we have no access to the pcb */
-#if SCION
+#ifdef SCION
   scion_output(p, local_ip, remote_ip, path, exts, IP_PROTO_TCP);
 #else
   ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
@@ -1379,7 +1379,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
 
-#if !SCION
+#ifndef SCION
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
                           ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
                           ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
@@ -1403,11 +1403,11 @@ tcp_keepalive(struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
   /* Send output to IP */
-#if LWIP_NETIF_HWADDRHINT
+#ifdef SCION
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
-#elif SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
@@ -1436,7 +1436,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   u16_t len;
   u8_t is_fin;
 
-#if !SCION
+#ifndef SCION
   LWIP_DEBUGF(TCP_DEBUG,
               ("tcp_zero_window_probe: sending ZERO WINDOW probe to %"
                U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -1488,11 +1488,11 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
   /* Send output to IP */
-#if LWIP_NETIF_HWADDRHINT
+#ifdef SCION
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+#elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
-#elif SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
