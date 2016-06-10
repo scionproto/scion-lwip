@@ -15,7 +15,7 @@
  */
 #include "lwip/ip_addr.h"
 
-void scion_addr_raw(saddr_t *addr, u8_t type, const u8_t *raw_addr){
+void scion_addr_from_raw(saddr_t *addr, u8_t type, const char *raw_addr){
     /* TODO: add some sanity checks */
     addr->type = type;
     int len = get_addr_len(type);
