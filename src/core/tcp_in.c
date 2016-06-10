@@ -64,7 +64,9 @@
    function. */
 static struct tcp_seg inseg;
 static struct tcp_hdr *tcphdr;
+#ifndef SCION
 static struct ip_hdr *iphdr;
+#endif
 static u32_t seqno, ackno;
 static u8_t flags;
 static u16_t tcplen;
