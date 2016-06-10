@@ -132,7 +132,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
     TCP_STATS_INC(tcp.lenerr);
     goto dropped;
   }
-  // here truncate buf basing on SCION's hdr_len
 
   /* Don't even process incoming broadcasts/multicasts. */
   if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||
@@ -155,7 +154,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
     goto dropped;
   }
 #endif
-
 
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */
@@ -204,10 +202,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
       break;
     }
 #ifdef SCION
-    // Try to find not_acked SVC's PCB.
+    /* Try to find unacked SVC's PCB. */
     if (scion_addr_cmp_svc(&(pcb->remote_ip), &current_iphdr_src, pcb->svc) &&
-        pcb->local_port == tcphdr->dest){
-        // Found. Setting port and IP of anycast's instance.
+        pcb->local_port == tcphdr->dest) {
+        /* Found. Setting port and IP of anycast's instance. */
         pcb->remote_port = tcphdr->src;
         scion_addr_set(&(pcb->remote_ip), &current_iphdr_src);
 
@@ -266,9 +264,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
       }
 #ifdef SCION
-      // Try to find SVC listening socket.
-      // TODO(PSz): now takes the first one, should take random. Also
-      // investigate SO_REUSE in the SVC context.
+      /* Try to find SVC listening socket. */
+      /* TODO(PSz): now takes the first one, should take random. */
       if (scion_addr_cmp_svc(&current_iphdr_dest, &(lpcb->local_ip), lpcb->svc))
           /* found a match */
           break;
@@ -526,7 +523,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
 #ifdef SCION
-    if (pcb->svc != NO_SVC)  // Copy from PCB, as current_iphdr_dest is SVC addr.
+    if (pcb->svc != NO_SVC)  /* Copy from PCB, as current_iphdr_dest is SVC addr. */
         ip_addr_copy(npcb->local_ip, pcb->local_ip);
     else
 #endif /* SCION */
@@ -565,7 +562,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->path = path;
     memcpy(&npcb->path->first_hop, &current_path.first_hop,
            sizeof(struct sockaddr_in));
-    // TODO(PSz): it makes sense to put MTU within spath_t.
+    /* TODO(PSz): it makes sense to put MTU within spath_t. */
 #endif
 
     snmp_inc_tcppassiveopens();

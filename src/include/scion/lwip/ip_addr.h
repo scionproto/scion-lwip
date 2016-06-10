@@ -28,14 +28,12 @@ extern "C" {
 #endif
 
 #define MAX_ADDR_LEN (ISD_AS_LEN + MAX_HOST_ADDR_LEN)
-#define NO_SVC 0xff
-#define ANY_ADDR_TYPE 0xff // PSz: could we reuse NONE for that?
+#define NO_SVC 0xffff
+#define ANY_ADDR_TYPE 0xff /* PSz: could we reuse NONE for that? */
 
 typedef saddr_t ip_addr_t;
 
-void scion_addr_val(saddr_t *addr, u16_t isd, u32_t ad, u8_t type, u8_t *host_addr);
 void scion_addr_raw(saddr_t *addr, u8_t type, const u8_t *raw_addr);
-
 #define ip_addr_set(a, b) scion_addr_set(a, b)
 #define ip_addr_copy(a, b) scion_addr_set(&a, &b)
 void scion_addr_set(saddr_t *dst, const saddr_t *src);
@@ -43,7 +41,7 @@ void scion_addr_set(saddr_t *dst, const saddr_t *src);
 #define ip_addr_set_any(a) scion_addr_set_any(a)
 void scion_addr_set_any(saddr_t *addr);
 
-// FIXME(PSz): remove after we use generic cheksum.
+/* FIXME(PSz): remove after we use generic cheksum. */
 u32_t ip4_addr_get_u32(const saddr_t *addr);
 
 #define ip_addr_cmp(a, b) scion_addr_cmp(a, b)

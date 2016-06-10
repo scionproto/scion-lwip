@@ -41,29 +41,25 @@ spath_t current_path = {.raw_path = NULL, .len = 0};
 exts_t current_exts;
 
 struct netif *
-scion_route(ip_addr_t *dest)
-{
-    // Should not be here.
-    fprintf(stderr, "ip_route() NOT IMPLEMENTED!");
+scion_route(ip_addr_t *dest){
     return (struct netif *) NULL;
 }
 
 err_t
 scion_input(struct pbuf *p, struct netif *inp){
-    fprintf(stderr, "scion_input() called (%dB)\n", p->len);
     /* Packet from TCP queue: [from (sockaddr_in) || raw_spkt] */
     int sin_size = sizeof(struct sockaddr_in);
     spkt_t *spkt = parse_spkt(p->payload + sin_size);
-    // Addresses:
-    // FIXME(PSz): bzero() is required by checksum computed over SVC addr.
+    /* Addresses: */
+    /* FIXME(PSz): bzero() is required by checksum computed over SVC addr. */
     bzero(current_iphdr_src.addr, MAX_ADDR_LEN);
     bzero(current_iphdr_dest.addr, MAX_ADDR_LEN);
     scion_addr_set(&current_iphdr_src, spkt->src);
     scion_addr_set(&current_iphdr_dest, spkt->dst);
-    // Path:
+    /* Path: */
     memcpy(&current_path.first_hop, p->payload, sin_size);
-    // FIXME(PSz): don't have to alloc/free if already allocated space is ok.
-    // Use realloc() or just have a static buffer.
+    /* FIXME(PSz): don't have to alloc/free if already allocated space is ok. */
+    /* Use realloc() or just have a static buffer. */
     if (spkt->path){
         current_path.raw_path = malloc(spkt->path->len);
         current_path.len = spkt->path->len;
@@ -72,7 +68,7 @@ scion_input(struct pbuf *p, struct netif *inp){
     else{
         current_path.len = 0;
     }
-    // TODO(PSz): extensions
+    /* TODO(PSz): extensions */
 
     tcp_input(p, inp);
 
@@ -88,7 +84,6 @@ scion_input(struct pbuf *p, struct netif *inp){
 err_t
 scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
              exts_t *exts, u8_t proto){
-    fprintf(stderr, "scion_output() called(%d)\n", p->len);
     /* pbufs passed to SCION must have a ref-count of 1 as their payload pointer
        gets altered as the packet is passed down the stack */
     LWIP_ASSERT("p->ref == 1", p->ref == 1);
@@ -102,17 +97,15 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     u16_t spkt_len = ntohs(spkt->sch->total_len);
     u8_t packed[spkt_len];
 
-    if (pack_spkt(spkt, packed, spkt_len)){
-        fprintf(stderr, "pack_sptk() failed\n");
+    if (pack_spkt(spkt, packed, spkt_len))
         return ERR_VAL;
-    }
-    // Set OF indexes.
+    /* Set OF indexes. */
     init_of_idx(packed);
 
-    // Send it through SCION overlay.
+    /* Send it through SCION overlay. */
     tcp_scion_output(packed, spkt_len, &path->first_hop);
 
-    // Free sch and spkt allocated with build_spkt().
+    /* Free sch and spkt allocated with build_spkt(). */
     free(spkt->sch);
     free(spkt);
     return ERR_OK;

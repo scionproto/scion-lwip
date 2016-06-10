@@ -62,6 +62,7 @@ extern "C" {
 
 #define IP_HLEN 20
 #define UDP_HLEN 8
+/* FIXME(PSz): depends on the overlay deployed. */
 #define SCION_DEFAULT_MTU (1500 - IP_HLEN - UDP_HLEN)
 #define IP_PROTO_TCP     6
 
@@ -70,7 +71,7 @@ extern "C" {
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
 #define IP_PCB \
-  /* SCION Addresses in the fact */ \
+  /* SCION Addresses in fact */ \
   ip_addr_t local_ip; \
   ip_addr_t remote_ip; \
    /* Socket options */  \
@@ -115,10 +116,10 @@ extern spath_t current_path;
 extern exts_t current_exts;
 
 #define ip_init() /* Compatibility define, not init needed. */
-#define ip_route(a) scion_route(a)
+#define ip_route scion_route
 struct netif *ip_route(ip_addr_t *dest);
 err_t scion_input(struct pbuf *p, struct netif *inp);
-#define ip_input(a, b) scion_input(a, b)
+#define ip_input scion_input
 err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, 
                    spath_t *path, exts_t *exts, u8_t proto);
 /** Source SCION address of current_header */

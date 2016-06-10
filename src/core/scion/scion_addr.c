@@ -15,16 +15,8 @@
  */
 #include "lwip/ip_addr.h"
 
-void scion_addr_val(saddr_t *addr, u16_t isd, u32_t ad, u8_t type, u8_t *host_addr){
-    //TODO: add some sanity checks
-    addr->type = type;
-    *((u32_t *)addr->addr) = htonl(ISD_AS(isd, ad));
-    int len = get_addr_len(type);
-    memcpy(addr->addr + ISD_AS_LEN, host_addr, len);
-}
-
 void scion_addr_raw(saddr_t *addr, u8_t type, const u8_t *raw_addr){
-    //TODO: add some sanity checks
+    /* TODO: add some sanity checks */
     addr->type = type;
     int len = get_addr_len(type);
     memcpy(addr->addr, raw_addr, ISD_AS_LEN + len);
@@ -43,7 +35,7 @@ void scion_addr_set_any(saddr_t *addr){
     addr->type = ANY_ADDR_TYPE;
 }
 
-// FIXME(PSz): remove after we use generic cheksum.
+/* FIXME(PSz): remove after we use generic cheksum. */
 u32_t ip4_addr_get_u32(const saddr_t *addr){
     return *((u32_t *)(addr->addr + ISD_AS_LEN));
 }
@@ -62,7 +54,7 @@ int scion_addr_cmp_svc(const saddr_t *addr1, const saddr_t *addr2, u16_t svc){
     if (addr1 == NULL || addr2 == NULL)
         return (addr1 == addr2);
     if (addr1->type == ADDR_SVC_TYPE && svc != NO_SVC)
-        if (!bcmp(addr1->addr, addr2->addr, ISD_AS_LEN)) // ISD, AD are ok
+        if (!bcmp(addr1->addr, addr2->addr, ISD_AS_LEN))  /* ISD, AD are ok */
             return (ntohs(*((u16_t*)(addr1->addr + ISD_AS_LEN))) == svc);
     return 0;
 }

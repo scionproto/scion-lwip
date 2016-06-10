@@ -875,7 +875,6 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
         IP_PROTO_TCP, p->tot_len);
 #endif
-
 #ifdef SCION
   scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
 #elif LWIP_NETIF_HWADDRHINT
@@ -1383,6 +1382,10 @@ tcp_keepalive(struct tcp_pcb *pcb)
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
                           ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
                           ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
+#else
+        char host_str[MAX_HOST_ADDR_STR];
+        format_host(pcb->remote_ip.type, pcb->remote_ip.addr, host_str, sizeof(host_str));
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to %s\n", host_str));
 #endif
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n",
@@ -1442,6 +1445,10 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
                U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
                ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
                ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
+#else
+        char host_str[MAX_HOST_ADDR_STR];
+        format_host(pcb->remote_ip.type, pcb->remote_ip.addr, host_str, sizeof(host_str));
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: sending ZERO WINDOW probe to %s\n", host_str));
 #endif
 
   LWIP_DEBUGF(TCP_DEBUG,

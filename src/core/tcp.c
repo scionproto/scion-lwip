@@ -925,6 +925,10 @@ tcp_slowtmr_start:
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
                                 ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
                                 ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
+#else
+        char host_str[MAX_HOST_ADDR_STR];
+        format_host(pcb->remote_ip.type, pcb->remote_ip.addr, host_str, sizeof(host_str));
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %s\n", host_str));
 #endif
         
         ++pcb_remove;
@@ -1587,7 +1591,6 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   if (pcb->path != NULL){
       free(pcb->path->raw_path);
       free(pcb->path);
-      fprintf(stderr, "Freeing path in tcp_pcb_remove()\n");
   }
 #endif
 
