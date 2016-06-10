@@ -55,7 +55,7 @@ int scion_addr_cmp_svc(const saddr_t *addr1, const saddr_t *addr2, u16_t svc){
         return (addr1 == addr2);
     if (addr1->type == ADDR_SVC_TYPE && svc != NO_SVC)
         if (!bcmp(addr1->addr, addr2->addr, ISD_AS_LEN))  /* ISD, AD are ok */
-            return (ntohs(*((u16_t*)(addr1->addr + ISD_AS_LEN))) == svc);
+            return (*((u16_t*)(addr1->addr + ISD_AS_LEN)) == svc);
     return 0;
 }
 
