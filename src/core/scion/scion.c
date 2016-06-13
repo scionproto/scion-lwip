@@ -47,9 +47,9 @@ scion_route(ip_addr_t *dest){
 
 err_t
 scion_input(struct pbuf *p, struct netif *inp){
-    /* Packet from TCP queue: [from (sockaddr_in) || raw_spkt] */
-    int sin_size = sizeof(struct sockaddr_in);
-    spkt_t *spkt = parse_spkt(p->payload + sin_size);
+    /* Packet from TCP queue: [from_len (1B) || from (sockaddr_in) || raw_spkt] */
+    u8_t sin_size = ((u8_t *)p->payload)[0];
+    spkt_t *spkt = parse_spkt(p->payload + 1 + sin_size);
     /* Addresses: */
     /* FIXME(PSz): bzero() is required by checksum computed over SVC addr. */
     bzero(current_iphdr_src.addr, MAX_ADDR_LEN);
@@ -57,13 +57,13 @@ scion_input(struct pbuf *p, struct netif *inp){
     scion_addr_set(&current_iphdr_src, spkt->src);
     scion_addr_set(&current_iphdr_dest, spkt->dst);
     /* Path: */
-    memcpy(&current_path.first_hop, p->payload, sin_size);
+    memcpy(&current_path.first_hop, p->payload + 1, sin_size);
     /* FIXME(PSz): don't have to alloc/free if already allocated space is ok. */
     /* Use realloc() or just have a static buffer. */
     if (spkt->path){
         current_path.raw_path = malloc(spkt->path->len);
         current_path.len = spkt->path->len;
-        reverse_path(p->payload + sin_size, current_path.raw_path);
+        reverse_path(p->payload + 1 + sin_size, current_path.raw_path);
     }
     else{
         current_path.len = 0;

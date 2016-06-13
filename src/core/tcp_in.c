@@ -114,7 +114,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 #else
-  u8_t *pl4 = (u8_t *)p->payload + sizeof(struct sockaddr_in);
+  u8_t sin_size = ((u8_t *)p->payload)[0];
+  u8_t *pl4 = (u8_t *)p->payload + 1 + sin_size;
   get_l4_proto(&pl4);
   tcphdr = (struct tcp_hdr *)pl4;
 #endif

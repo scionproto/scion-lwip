@@ -54,6 +54,7 @@ int scion_addr_isany(const saddr_t *addr);
 #define ip_addr_isbroadcast(ipaddr, netif) 0
 #define ip_addr_ismulticast(addr1) 0
 
+/* Forward declaration to not include netif.h */
 struct netif;
 
 #ifdef __cplusplus
