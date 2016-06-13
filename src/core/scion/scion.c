@@ -49,7 +49,8 @@ err_t
 scion_input(struct pbuf *p, struct netif *inp){
     /* Packet from TCP queue: [from_len (1B) || from (sockaddr_in) || raw_spkt] */
     u8_t sin_size = ((u8_t *)p->payload)[0];
-    spkt_t *spkt = parse_spkt(p->payload + 1 + sin_size);
+    u8_t *spkt_start = p->payload + 1 + sin_size;
+    spkt_t *spkt = parse_spkt(spkt_start);
     /* Addresses: */
     /* FIXME(PSz): bzero() is required by checksum computed over SVC addr. */
     bzero(current_iphdr_src.addr, MAX_ADDR_LEN);
@@ -63,14 +64,20 @@ scion_input(struct pbuf *p, struct netif *inp){
     if (spkt->path){
         current_path.raw_path = malloc(spkt->path->len);
         current_path.len = spkt->path->len;
-        reverse_path(p->payload + 1 + sin_size, current_path.raw_path);
+        reverse_path(spkt_start, current_path.raw_path);
     }
     else{
         current_path.len = 0;
     }
     /* TODO(PSz): extensions */
 
-    tcp_input(p, inp);
+    /* Point to the TCP header */
+    if (pbuf_header(p, (u8_t *)p->payload - spkt->l4->payload)){
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("packet too short for tcp_input()\n"));
+        pbuf_free(p);
+    }
+    else  /* pass to the TCP stack */
+        tcp_input(p, inp);
 
     destroy_spkt(spkt, 1);
     if (current_path.raw_path) {

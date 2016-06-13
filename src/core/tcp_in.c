@@ -114,10 +114,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 #else
-  u8_t sin_size = ((u8_t *)p->payload)[0];
-  u8_t *pl4 = (u8_t *)p->payload + 1 + sin_size;
-  get_l4_proto(&pl4);
-  tcphdr = (struct tcp_hdr *)pl4;
+  tcphdr = (struct tcp_hdr *)p->payload;
 #endif
 
 #if TCP_INPUT_DEBUG
@@ -128,7 +125,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* remove header from payload */
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
 #else
-  if (pbuf_header(p, (u8_t *)p->payload - pl4) || (p->tot_len < sizeof(struct tcp_hdr))) {
+  if (p->tot_len < sizeof(struct tcp_hdr)) {
 #endif
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
