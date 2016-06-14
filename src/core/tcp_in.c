@@ -55,13 +55,18 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 #include "arch/perf.h"
+#ifdef SCION
+#include "libscion/packet.h"
+#endif
 
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
    function. */
 static struct tcp_seg inseg;
 static struct tcp_hdr *tcphdr;
+#ifndef SCION
 static struct ip_hdr *iphdr;
+#endif
 static u32_t seqno, ackno;
 static u8_t flags;
 static u16_t tcplen;
@@ -105,15 +110,23 @@ tcp_input(struct pbuf *p, struct netif *inp)
   TCP_STATS_INC(tcp.recv);
   snmp_inc_tcpinsegs();
 
+#ifndef SCION
   iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
+#else
+  tcphdr = (struct tcp_hdr *)p->payload;
+#endif
 
 #if TCP_INPUT_DEBUG
   tcp_debug_print(tcphdr);
 #endif
 
+#ifndef SCION
   /* remove header from payload */
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
+#else
+  if (p->tot_len < sizeof(struct tcp_hdr)) {
+#endif
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
     TCP_STATS_INC(tcp.lenerr);
@@ -188,6 +201,24 @@ tcp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
       break;
     }
+#ifdef SCION
+    /* Try to find unacked SVC's PCB. */
+    if (scion_addr_cmp_svc(&(pcb->remote_ip), &current_iphdr_src, pcb->svc) &&
+        pcb->local_port == tcphdr->dest) {
+        /* Found. Setting port and IP of anycast's instance. */
+        pcb->remote_port = tcphdr->src;
+        scion_addr_set(&(pcb->remote_ip), &current_iphdr_src);
+
+        LWIP_ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
+        if (prev != NULL) {
+          prev->next = pcb->next;
+          pcb->next = tcp_active_pcbs;
+          tcp_active_pcbs = pcb;
+        }
+        LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
+        break;
+    }
+#endif
     prev = pcb;
   }
 
@@ -232,6 +263,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 #endif /* SO_REUSE */
       }
+#ifdef SCION
+      /* Try to find SVC listening socket. */
+      /* TODO(PSz): now takes the first one, should take random. */
+      if (scion_addr_cmp_svc(&current_iphdr_dest, &(lpcb->local_ip), lpcb->svc))
+          /* found a match */
+          break;
+#endif
       prev = (struct tcp_pcb *)lpcb;
     }
 #if SO_REUSE
@@ -410,7 +448,11 @@ aborted:
       TCP_STATS_INC(tcp.drop);
       tcp_rst(ackno, seqno + tcplen,
         ip_current_dest_addr(), ip_current_src_addr(),
+#ifndef SCION
         tcphdr->dest, tcphdr->src);
+#else
+        tcphdr->dest, tcphdr->src, &current_path, &current_exts);
+#endif
     }
     pbuf_free(p);
   }
@@ -454,7 +496,11 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
        RST. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
     tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
+#ifndef SCION
       ip_current_src_addr(), tcphdr->dest, tcphdr->src);
+#else
+      ip_current_src_addr(), tcphdr->dest, tcphdr->src, &current_path, &current_exts);
+#endif
   } else if (flags & TCP_SYN) {
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
 #if TCP_LISTEN_BACKLOG
@@ -476,6 +522,11 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     pcb->accepts_pending++;
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
+#ifdef SCION
+    if (pcb->svc != NO_SVC)  /* Copy from PCB, as current_iphdr_dest is SVC addr. */
+        ip_addr_copy(npcb->local_ip, pcb->local_ip);
+    else
+#endif /* SCION */
     ip_addr_copy(npcb->local_ip, current_iphdr_dest);
     npcb->local_port = pcb->local_port;
     ip_addr_copy(npcb->remote_ip, current_iphdr_src);
@@ -502,6 +553,17 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #if TCP_CALCULATE_EFF_SEND_MSS
     npcb->mss = tcp_eff_send_mss(npcb->mss, &(npcb->remote_ip));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
+
+#ifdef SCION
+    spath_t *path = malloc(sizeof *path);
+    path->raw_path = malloc(current_path.len);
+    memcpy(path->raw_path, current_path.raw_path, current_path.len);
+    path->len = current_path.len;
+    npcb->path = path;
+    memcpy(&npcb->path->first_hop, &current_path.first_hop,
+           sizeof(struct sockaddr_in));
+    /* TODO(PSz): it makes sense to put MTU within spath_t. */
+#endif
 
     snmp_inc_tcppassiveopens();
 
@@ -543,7 +605,11 @@ tcp_timewait_input(struct tcp_pcb *pcb)
     if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {
       /* If the SYN is in the window it is an error, send a reset */
       tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
+#ifndef SCION
         tcphdr->dest, tcphdr->src);
+#else
+        tcphdr->dest, tcphdr->src, &current_path, &current_exts);
+#endif
       return ERR_OK;
     }
   } else if (flags & TCP_FIN) {
@@ -677,7 +743,11 @@ tcp_process(struct tcp_pcb *pcb)
     else if (flags & TCP_ACK) {
       /* send a RST to bring the other side in a non-synchronized state. */
       tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
+#ifndef SCION
         tcphdr->dest, tcphdr->src);
+#else
+        tcphdr->dest, tcphdr->src, &current_path, &current_exts);
+#endif
     }
     break;
   case SYN_RCVD:
@@ -720,7 +790,11 @@ tcp_process(struct tcp_pcb *pcb)
       } else {
         /* incorrect ACK number, send RST */
         tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
+#ifndef SCION
                 tcphdr->dest, tcphdr->src);
+#else
+                tcphdr->dest, tcphdr->src, pcb->path, pcb->exts);
+#endif
       }
     } else if ((flags & TCP_SYN) && (seqno == pcb->rcv_nxt - 1)) {
       /* Looks like another copy of the SYN - retransmit our SYN-ACK */

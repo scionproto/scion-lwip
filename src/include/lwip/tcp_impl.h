@@ -443,7 +443,11 @@ void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
 void tcp_rst(u32_t seqno, u32_t ackno,
        ip_addr_t *local_ip, ip_addr_t *remote_ip,
+#ifndef SCION
        u16_t local_port, u16_t remote_port);
+#else
+       u16_t local_port, u16_t remote_port, spath_t *path, exts_t *exts);
+#endif
 
 u32_t tcp_next_iss(void);
 

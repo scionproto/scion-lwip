@@ -180,7 +180,11 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
       /* don't call tcp_abort here: we must not deallocate the pcb since
          that might not be expected when calling tcp_close */
       tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
+#ifndef SCION
         pcb->local_port, pcb->remote_port);
+#else
+        pcb->local_port, pcb->remote_port, pcb->path, pcb->exts);
+#endif
 
       tcp_pcb_purge(pcb);
       TCP_RMV_ACTIVE(pcb);
@@ -392,7 +396,12 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 #endif /* TCP_QUEUE_OOSEQ */
     if (reset) {
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
-      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port);
+      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port
+#ifndef SCION
+        );
+#else
+        , pcb->path, pcb->exts);
+#endif
     }
     memp_free(MEMP_TCP_PCB, pcb);
     TCP_EVENT_ERR(errf, errf_arg, ERR_ABRT);
@@ -479,7 +488,11 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   }
 
   if (!ip_addr_isany(ipaddr)) {
+#ifndef SCION
     pcb->local_ip = *ipaddr;
+#else
+    scion_addr_set(&pcb->local_ip, ipaddr);
+#endif
   }
   pcb->local_port = port;
   TCP_REG(&tcp_bound_pcbs, pcb);
@@ -552,8 +565,14 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->prio = pcb->prio;
   lpcb->so_options = pcb->so_options;
   ip_set_option(lpcb, SOF_ACCEPTCONN);
+#ifdef SCION
+  lpcb->path = pcb->path;
+  lpcb->exts = pcb->exts;
+  lpcb->svc = pcb->svc;
+#else
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
+#endif
   ip_addr_copy(lpcb->local_ip, pcb->local_ip);
   if (pcb->local_port != 0) {
     TCP_RMV(&tcp_bound_pcbs, pcb);
@@ -692,7 +711,11 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
   if (ipaddr != NULL) {
+#ifndef SCION
     pcb->remote_ip = *ipaddr;
+#else
+    scion_addr_set(&pcb->remote_ip, ipaddr);
+#endif
   } else {
     return ERR_VAL;
   }
@@ -898,9 +921,15 @@ tcp_slowtmr_start:
       if((u32_t)(tcp_ticks - pcb->tmr) >
          (pcb->keep_idle + TCP_KEEP_DUR(pcb)) / TCP_SLOW_INTERVAL)
       {
+#ifndef SCION
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
                                 ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
                                 ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
+#else
+        char host_str[MAX_HOST_ADDR_STR];
+        format_host(pcb->remote_ip.type, pcb->remote_ip.addr, host_str, sizeof(host_str));
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %s\n", host_str));
+#endif
         
         ++pcb_remove;
         ++pcb_reset;
@@ -961,7 +990,11 @@ tcp_slowtmr_start:
 
       if (pcb_reset) {
         tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
+#ifndef SCION
           pcb->local_port, pcb->remote_port);
+#else
+          pcb->local_port, pcb->remote_port, pcb->path, pcb->exts);
+#endif
       }
 
       err_fn = pcb->errf;
@@ -1310,8 +1343,14 @@ tcp_alloc(u8_t prio)
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
     pcb->rcv_ann_wnd = TCP_WND;
+#ifdef SCION
+    pcb->path = NULL;
+    pcb->exts = NULL;
+    pcb->svc = NO_SVC;
+#else
     pcb->tos = 0;
     pcb->ttl = TCP_TTL;
+#endif
     /* As initial send MSS, we use TCP_MSS but limit it to 536.
        The send MSS is updated when an MSS option is received. */
     pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
@@ -1548,6 +1587,12 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
     pcb->flags |= TF_ACK_NOW;
     tcp_output(pcb);
   }
+#ifdef SCION
+  if (pcb->path != NULL){
+      free(pcb->path->raw_path);
+      free(pcb->path);
+  }
+#endif
 
   if (pcb->state != LISTEN) {
     LWIP_ASSERT("unsent segments leaking", pcb->unsent == NULL);
@@ -1586,11 +1631,16 @@ u16_t
 tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr)
 {
   u16_t mss_s;
+#ifndef SCION
   struct netif *outif;
 
   outif = ip_route(addr);
   if ((outif != NULL) && (outif->mtu != 0)) {
     mss_s = outif->mtu - IP_HLEN - TCP_HLEN;
+#else
+    {
+    mss_s = SCION_DEFAULT_MTU - TCP_HLEN;
+#endif
     /* RFC 1122, chap 4.2.2.6:
      * Eff.snd.MSS = min(SendMSS+20, MMS_S) - TCPhdrsize - IPoptionsize
      * We correct for TCP options in tcp_write(), and don't support IP options.

@@ -1,3 +1,6 @@
+Userspace implementation of TCP/SCION based on lwIP. Original README's content:
+
+
 INTRODUCTION
 
 lwIP is a small independent implementation of the TCP/IP protocol
