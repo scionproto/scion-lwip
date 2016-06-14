@@ -1633,6 +1633,7 @@ tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr)
   u16_t mss_s;
 #ifndef SCION
   struct netif *outif;
+
   outif = ip_route(addr);
   if ((outif != NULL) && (outif->mtu != 0)) {
     mss_s = outif->mtu - IP_HLEN - TCP_HLEN;

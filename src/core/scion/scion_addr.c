@@ -25,10 +25,8 @@ void scion_addr_from_raw(saddr_t *addr, u8_t type, const char *raw_addr){
 void scion_addr_set(saddr_t *dst, const saddr_t *src){
     if (src == NULL)
         dst->type = ANY_ADDR_TYPE;
-    else{
-        dst->type = src->type;
-        memcpy(dst->addr, src->addr, MAX_ADDR_LEN);
-    }
+    else
+        memcpy(dst, src, sizeof(saddr_t));
 }
 
 void scion_addr_set_any(saddr_t *addr){
@@ -45,7 +43,7 @@ int scion_addr_cmp(const saddr_t *addr1, const saddr_t *addr2){
         return (addr1 == addr2);
     if (addr1->type == addr2->type){
         int len = get_addr_len(addr1->type);
-        return !bcmp(addr1->addr, addr2->addr, ISD_AS_LEN + len);
+        return !memcmp(addr1->addr, addr2->addr, ISD_AS_LEN + len);
     }
     return 0;
 }
@@ -54,7 +52,7 @@ int scion_addr_cmp_svc(const saddr_t *addr1, const saddr_t *addr2, u16_t svc){
     if (addr1 == NULL || addr2 == NULL)
         return (addr1 == addr2);
     if (addr1->type == ADDR_SVC_TYPE && svc != NO_SVC)
-        if (!bcmp(addr1->addr, addr2->addr, ISD_AS_LEN))  /* ISD, AD are ok */
+        if (!memcmp(addr1->addr, addr2->addr, ISD_AS_LEN))  /* ISD, AD are ok */
             return (*((u16_t*)(addr1->addr + ISD_AS_LEN)) == svc);
     return 0;
 }

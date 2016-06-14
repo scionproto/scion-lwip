@@ -31,13 +31,13 @@
 #include "lwip/tcpip.h"
 #include "libscion/scion.h"
 
-/** Source SCION address of current_header */
+/* Source SCION address of current_header */
 ip_addr_t current_iphdr_src;
-/** Destination SCION address of current_header */
+/* Destination SCION address of current_header */
 ip_addr_t current_iphdr_dest;
-/**  SCION path of current_header */
+/*  SCION path of current_header */
 spath_t current_path = {.raw_path = NULL, .len = 0};
-/**  SCION extensions of current_header */
+/*  SCION extensions of current_header */
 exts_t current_exts;
 
 struct netif *
@@ -52,9 +52,9 @@ scion_input(struct pbuf *p, struct netif *inp){
     u8_t *spkt_start = p->payload + 1 + sin_size;
     spkt_t *spkt = parse_spkt(spkt_start);
     /* Addresses: */
-    /* FIXME(PSz): bzero() is required by checksum computed over SVC addr. */
-    bzero(current_iphdr_src.addr, MAX_ADDR_LEN);
-    bzero(current_iphdr_dest.addr, MAX_ADDR_LEN);
+    /* FIXME(PSz): memset() is required by checksum computed over SVC addr. */
+    memset(current_iphdr_src.addr, 0, MAX_ADDR_LEN);
+    memset(current_iphdr_dest.addr, 0, MAX_ADDR_LEN);
     scion_addr_set(&current_iphdr_src, spkt->src);
     scion_addr_set(&current_iphdr_dest, spkt->dst);
     /* Path: */
