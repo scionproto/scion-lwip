@@ -47,9 +47,8 @@ scion_route(ip_addr_t *dest){
 
 err_t
 scion_input(struct pbuf *p, struct netif *inp){
-    /* Packet from TCP queue: [from_len (1B) || from (sockaddr_in) || raw_spkt] */
-    u8_t sin_size = ((u8_t *)p->payload)[0];
-    u8_t *spkt_start = p->payload + 1 + sin_size;
+    /* Packet from TCP queue: [from (HostAddr) || raw_spkt] */
+    u8_t *spkt_start = p->payload + sizeof(HostAddr);
     spkt_t *spkt = parse_spkt(spkt_start);
     /* Addresses: */
     /* FIXME(PSz): memset() is required by checksum computed over SVC addr. */
@@ -58,7 +57,7 @@ scion_input(struct pbuf *p, struct netif *inp){
     scion_addr_set(&current_iphdr_src, spkt->src);
     scion_addr_set(&current_iphdr_dest, spkt->dst);
     /* Path: */
-    memcpy(&current_path.first_hop, p->payload + 1, sin_size);
+    memcpy(&current_path.first_hop, p->payload, sizeof(HostAddr));
     /* FIXME(PSz): don't have to alloc/free if already allocated space is ok. */
     /* Use realloc() or just have a static buffer. */
     if (spkt->path){
@@ -85,6 +84,7 @@ scion_input(struct pbuf *p, struct netif *inp){
         current_path.raw_path = NULL;
         current_path.len = 0;
     }
+    fprintf(stderr, "PACKET RECEIVED\n");
     return ERR_OK;
 }
 
@@ -110,6 +110,7 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     init_of_idx(packed);
 
     /* Send it through SCION overlay. */
+    fprintf(stderr, "PACKET SENT\n");
     tcp_scion_output(packed, spkt_len, &path->first_hop);
 
     /* Free sch and spkt allocated with build_spkt(). */

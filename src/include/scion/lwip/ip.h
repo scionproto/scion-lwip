@@ -133,7 +133,7 @@ err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 #define ip_set_option(pcb, opt)   ((pcb)->so_options |= (opt))
 
 /** Pointer to the output function. Set by the dispatcher. */
-void (*tcp_scion_output)(uint8_t *, int, struct sockaddr_in *);
+int (*tcp_scion_output)(uint8_t *, int, HostAddr *);
 
 #ifdef __cplusplus
 }
