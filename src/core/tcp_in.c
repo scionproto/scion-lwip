@@ -560,8 +560,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     memcpy(path->raw_path, current_path.raw_path, current_path.len);
     path->len = current_path.len;
     npcb->path = path;
-    memcpy(&npcb->path->first_hop, &current_path.first_hop,
-           sizeof(struct sockaddr_in));
+    memcpy(&npcb->path->first_hop, &current_path.first_hop, sizeof(HostAddr));
     /* TODO(PSz): it makes sense to put MTU within spath_t. */
 #endif
 
