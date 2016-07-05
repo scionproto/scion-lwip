@@ -131,6 +131,8 @@ err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 #define ip_get_option(pcb, opt)   ((pcb)->so_options & (opt))
 /** Sets an IP pcb option (SOF_* flags) */
 #define ip_set_option(pcb, opt)   ((pcb)->so_options |= (opt))
+/** Resets an IP pcb option (SOF_* flags) */
+#define ip_reset_option(pcb, opt) ((pcb)->so_options &= ~(opt))
 
 /** Pointer to the output function. Set by the dispatcher. */
 int (*tcp_scion_output)(uint8_t *, int, HostAddr *);
