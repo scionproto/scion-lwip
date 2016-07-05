@@ -84,7 +84,6 @@ scion_input(struct pbuf *p, struct netif *inp){
         current_path.raw_path = NULL;
         current_path.len = 0;
     }
-    fprintf(stderr, "PACKET RECEIVED\n");
     return ERR_OK;
 }
 
@@ -110,7 +109,6 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     init_of_idx(packed);
 
     /* Send it through SCION overlay. */
-    fprintf(stderr, "PACKET SENT\n");
     tcp_scion_output(packed, spkt_len, &path->first_hop);
 
     /* Free sch and spkt allocated with build_spkt(). */
