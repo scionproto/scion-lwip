@@ -99,7 +99,32 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     tcp_data.len = p->len;
     tcp_data.payload = p->payload;
 
-    spkt_t *spkt = build_spkt(src, dst, path, exts, &tcp_data);
+    /* If the first packet is to BS, then one-path extension needs to be prepended. */
+    exts_t special_exts = {.count = 0, .extensions = NULL};
+    if (dst->type == ADDR_SVC_TYPE){
+        if (*(u16_t*)(dst->addr + ISD_AS_LEN) == SVC_BEACON &&
+           TCPH_FLAGS((struct tcp_hdr *)p->payload) == TCP_SYN){
+            /* Create one-hop-path extensions. */
+            seh_t one_hop;
+            build_one_hop_path_ext(&one_hop);
+            /* Prepend one-hop-path extension. */
+            int count = 1;
+            if (exts)
+                count += exts->count;
+            special_exts.count = count;
+            special_exts.extensions = (seh_t *)malloc(count);
+            special_exts.extensions[0] = one_hop;
+            int i;
+            for (i=1; i < count; i++)
+                special_exts.extensions[i] = exts->extensions[i-1];
+        }
+    }
+
+    spkt_t *spkt;
+    if (special_exts.count)
+        spkt = build_spkt(src, dst, path, &special_exts, &tcp_data);
+    else
+        spkt = build_spkt(src, dst, path, exts, &tcp_data);
     u16_t spkt_len = ntohs(spkt->sch->total_len);
     u8_t packed[spkt_len];
 
@@ -114,6 +139,10 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     /* Free sch and spkt allocated with build_spkt(). */
     free(spkt->sch);
     free(spkt);
+    if (special_exts.count){
+        free(special_exts.extensions[0].payload);
+        free(special_exts.extensions);
+    }
     return ERR_OK;
 }
 
