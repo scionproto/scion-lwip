@@ -876,7 +876,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
         IP_PROTO_TCP, p->tot_len);
 #endif
 #ifdef SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP, 0);
 #elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
@@ -1165,7 +1165,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
 #ifdef SCION
-  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+  scion_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP, pcb->scion_flags);
 #elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &(pcb->addr_hint));
@@ -1232,7 +1232,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   snmp_inc_tcpoutrsts();
    /* Send output with hardcoded TTL since we have no access to the pcb */
 #ifdef SCION
-  scion_output(p, local_ip, remote_ip, path, exts, IP_PROTO_TCP);
+  scion_output(p, local_ip, remote_ip, path, exts, IP_PROTO_TCP, 0);
 #else
   ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
 #endif
@@ -1407,7 +1407,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
 
   /* Send output to IP */
 #ifdef SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP, 0);
 #elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));
@@ -1496,7 +1496,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 
   /* Send output to IP */
 #ifdef SCION
-  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP);
+  scion_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->path, pcb->exts, IP_PROTO_TCP, 0);
 #elif LWIP_NETIF_HWADDRHINT
   ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
     &(pcb->addr_hint));

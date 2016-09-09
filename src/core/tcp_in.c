@@ -208,6 +208,14 @@ tcp_input(struct pbuf *p, struct netif *inp)
         /* Found. Setting port and IP of anycast's instance. */
         pcb->remote_port = tcphdr->src;
         scion_addr_set(&(pcb->remote_ip), &current_iphdr_src);
+        if (pcb->scion_flags & SCION_ONEHOPPATH) {
+            /* Clear the flag, isn't needed any more */
+            pcb->scion_flags &= ~SCION_ONEHOPPATH;
+            if (pcb->path->len == current_path.len)
+                memcpy(pcb->path->raw_path, current_path.raw_path, current_path.len);
+            else
+                LWIP_DEBUGF(TCP_INPUT_DEBUG, ("SYN+ACK to BS has path with different length\n"));
+        }
 
         LWIP_ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
         if (prev != NULL) {
