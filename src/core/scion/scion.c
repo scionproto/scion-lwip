@@ -89,7 +89,7 @@ scion_input(struct pbuf *p, struct netif *inp){
 
 err_t
 scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
-             exts_t *exts, u8_t proto){
+             exts_t *exts, u8_t proto, u8_t scion_flags){
     /* pbufs passed to SCION must have a ref-count of 1 as their payload pointer
        gets altered as the packet is passed down the stack */
     LWIP_ASSERT("p->ref == 1", p->ref == 1);
@@ -99,7 +99,28 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     tcp_data.len = p->len;
     tcp_data.payload = p->payload;
 
-    spkt_t *spkt = build_spkt(src, dst, path, exts, &tcp_data);
+    exts_t special_exts = {.count = 0, .extensions = NULL};
+    if (scion_flags & SCION_ONEHOPPATH && TCPH_FLAGS((struct tcp_hdr *)p->payload) == TCP_SYN) {
+        /* Create one-hop-path extension. */
+        seh_t one_hop;
+        build_one_hop_path_ext(&one_hop);
+        /* Prepend one-hop-path extension. */
+        int count = 1;
+        if (exts)
+            count += exts->count;
+        special_exts.count = count;
+        special_exts.extensions = (seh_t *)malloc(count);
+        special_exts.extensions[0] = one_hop;
+        int i;
+        for (i=1; i < count; i++)
+            special_exts.extensions[i] = exts->extensions[i-1];
+    }
+
+    spkt_t *spkt;
+    if (special_exts.count)
+        spkt = build_spkt(src, dst, path, &special_exts, &tcp_data);
+    else
+        spkt = build_spkt(src, dst, path, exts, &tcp_data);
     u16_t spkt_len = ntohs(spkt->sch->total_len);
     u8_t packed[spkt_len];
 
@@ -114,6 +135,10 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     /* Free sch and spkt allocated with build_spkt(). */
     free(spkt->sch);
     free(spkt);
+    if (special_exts.count){
+        free(special_exts.extensions[0].payload);
+        free(special_exts.extensions);
+    }
     return ERR_OK;
 }
 

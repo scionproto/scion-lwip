@@ -81,7 +81,9 @@ extern "C" {
    /* SCION Extensions, TODO(PSz): that should be exts_ctx_t.*/ \
   exts_t *exts; \
   /* SVC Addr */ \
-  u16_t svc;
+  u16_t svc; \
+  /* SCION flags */ \
+  u8_t scion_flags;
 
 struct ip_pcb {
 /* Common members of all PCB types */
@@ -105,6 +107,8 @@ struct ip_pcb {
 /* These flags are inherited (e.g. from a listen-pcb to a connection-pcb): */
 #define SOF_INHERITED   (SOF_REUSEADDR|SOF_KEEPALIVE|SOF_LINGER/*|SOF_DEBUG|SOF_DONTROUTE|SOF_OOBINLINE*/)
 
+#define SCION_ONEHOPPATH 0x01U  /* Connection is using the OneHopPath extension */
+
 
 /** Source SCION address of current_header */
 extern ip_addr_t current_iphdr_src;
@@ -121,7 +125,7 @@ struct netif *ip_route(ip_addr_t *dest);
 err_t scion_input(struct pbuf *p, struct netif *inp);
 #define ip_input scion_input
 err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, 
-                   spath_t *path, exts_t *exts, u8_t proto);
+                   spath_t *path, exts_t *exts, u8_t proto, u8_t scion_flags);
 /** Source SCION address of current_header */
 #define ip_current_src_addr()  (&current_iphdr_src)
 /** Destination SCION address of current_header */
