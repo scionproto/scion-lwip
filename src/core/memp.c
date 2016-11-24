@@ -455,6 +455,16 @@ memp_free(memp_t type, void *mem)
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 #endif /* MEMP_OVERFLOW_CHECK */
 
+#ifdef SCION
+  if (type == MEMP_TCP_PCB){
+      struct tcp_pcb *pcb = (struct tcp_pcb *)mem;
+      if (pcb->path != NULL){
+          free(pcb->path->raw_path);
+          free(pcb->path);
+      }
+  }
+#endif
+
   MEMP_STATS_DEC(used, type); 
   
   memp->next = memp_tab[type]; 
