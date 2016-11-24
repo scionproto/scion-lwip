@@ -85,7 +85,12 @@ extern const u16_t memp_sizes[MEMP_MAX];
 
 #define memp_init()
 #define memp_malloc(type)     mem_malloc(memp_sizes[type])
+#ifdef SCION
+void  memp_free_scion(memp_t type, void *mem);
+#define memp_free(type, mem)  memp_free_scion(type, mem)
+#else
 #define memp_free(type, mem)  mem_free(mem)
+#endif /* SCION */
 
 #else /* MEMP_MEM_MALLOC */
 
