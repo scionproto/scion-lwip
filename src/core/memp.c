@@ -467,4 +467,21 @@ memp_free(memp_t type, void *mem)
   SYS_ARCH_UNPROTECT(old_level);
 }
 
+#else /* MEMP_MEM_MALLOC */
+#ifdef SCION
+void
+memp_free_scion(memp_t type, void *mem)
+{
+  /* Free path (if exists) */
+  if (type == MEMP_TCP_PCB){
+      struct tcp_pcb *pcb = (struct tcp_pcb *)mem;
+      if (pcb->path != NULL){
+          mem_free(pcb->path->raw_path);
+          mem_free(pcb->path);
+      }
+  }
+  /* Free the rest */
+  mem_free(mem);
+}
+#endif /* SCION */
 #endif /* MEMP_MEM_MALLOC */
