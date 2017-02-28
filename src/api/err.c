@@ -38,7 +38,7 @@
 
 #include "lwip/err.h"
 
-#ifdef LWIP_DEBUG
+#if defined(LWIP_DEBUG) || defined(SCION)
 
 static const char *err_strerr[] = {
            "Ok.",                    /* ERR_OK          0  */
@@ -72,4 +72,4 @@ lwip_strerr(err_t err)
 
 }
 
-#endif /* LWIP_DEBUG */
+#endif /* defined(LWIP_DEBUG) || defined(SCION) */
