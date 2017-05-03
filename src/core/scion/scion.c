@@ -118,9 +118,9 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
 
     spkt_t *spkt;
     if (special_exts.count)
-        spkt = build_spkt(src, dst, path, &special_exts, &tcp_data);
+        spkt = build_spkt(dst, src, path, &special_exts, &tcp_data);
     else
-        spkt = build_spkt(src, dst, path, exts, &tcp_data);
+        spkt = build_spkt(dst, src, path, exts, &tcp_data);
     u16_t spkt_len = ntohs(spkt->sch->total_len);
     u8_t packed[spkt_len];
 
