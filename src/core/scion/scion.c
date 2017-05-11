@@ -51,9 +51,6 @@ scion_input(struct pbuf *p, struct netif *inp){
     u8_t *spkt_start = p->payload + sizeof(HostAddr);
     spkt_t *spkt = parse_spkt(spkt_start);
     /* Addresses: */
-    /* FIXME(PSz): memset() is required by checksum computed over SVC addr. */
-    memset(current_iphdr_src.addr, 0, MAX_ADDR_LEN);
-    memset(current_iphdr_dest.addr, 0, MAX_ADDR_LEN);
     scion_addr_set(&current_iphdr_src, spkt->src);
     scion_addr_set(&current_iphdr_dest, spkt->dst);
     /* Path: */
@@ -142,3 +139,43 @@ scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dst, spath_t *path,
     return ERR_OK;
 }
 
+u16_t
+inet_chksum_pseudo(struct pbuf *p,
+       saddr_t *src, saddr_t *dest,
+       u8_t proto, u16_t proto_len)
+{
+    int chk_count = 6; // Dst IA, Src IA, Dst host, Src host, L4 proto, L4 len
+    struct pbuf *q;
+    u16_t ret;
+    // Count the number of payload chunks
+    for(q = p; q != NULL; q = q->next) {
+        chk_count++;
+    }
+    chk_input *input = mk_chk_input(chk_count);
+
+    // Address headers (without padding)
+    chk_add_chunk(input, dest->addr, ISD_AS_LEN);
+    chk_add_chunk(input, src->addr, ISD_AS_LEN);
+    chk_add_chunk(input, dest->addr + ISD_AS_LEN, get_addr_len(dest->type));
+    chk_add_chunk(input, src->addr + ISD_AS_LEN, get_addr_len(src->type));
+    // L4 protocol type
+    chk_add_chunk(input, &proto, 1);
+    // Length of l4 header + payload
+    chk_add_chunk(input, (u8_t *)&proto_len, 2);
+    // Contents of l4 header + payload
+    for(q = p; q != NULL; q = q->next) {
+        chk_add_chunk(input, q->payload, q->len);
+    }
+
+    ret = checksum(input);
+    rm_chk_input(input);
+    return ret;
+}
+
+u16_t
+inet_chksum_pseudo_partial(struct pbuf *p,
+       saddr_t *src, saddr_t *dest,
+       u8_t proto, u16_t proto_len, u16_t chksum_len)
+{
+    return inet_chksum_pseudo(p, src, dest, proto, proto_len);
+}

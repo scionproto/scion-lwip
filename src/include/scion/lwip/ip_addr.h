@@ -41,9 +41,6 @@ void scion_addr_set(saddr_t *dst, const saddr_t *src);
 #define ip_addr_set_any(a) scion_addr_set_any(a)
 void scion_addr_set_any(saddr_t *addr);
 
-/* FIXME(PSz): remove after we use generic cheksum. */
-u32_t ip4_addr_get_u32(const saddr_t *addr);
-
 #define ip_addr_cmp(a, b) scion_addr_cmp(a, b)
 int scion_addr_cmp(const saddr_t *addr1, const saddr_t *addr2);
 int scion_addr_cmp_svc(const saddr_t *addr1, const saddr_t *addr2, u16_t svc);

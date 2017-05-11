@@ -33,11 +33,6 @@ void scion_addr_set_any(saddr_t *addr){
     addr->type = ANY_ADDR_TYPE;
 }
 
-/* FIXME(PSz): remove after we use generic cheksum. */
-u32_t ip4_addr_get_u32(const saddr_t *addr){
-    return *((u32_t *)(addr->addr + ISD_AS_LEN));
-}
-
 int scion_addr_cmp(const saddr_t *addr1, const saddr_t *addr2){
     if (addr1 == NULL || addr2 == NULL)
         return (addr1 == addr2);
