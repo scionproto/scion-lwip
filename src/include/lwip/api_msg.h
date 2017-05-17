@@ -114,6 +114,9 @@ struct api_msg_msg {
       u8_t backlog;
     } lb;
 #endif /* TCP_LISTEN_BACKLOG */
+#ifdef SCION
+    spath_t *path;
+#endif /* SCION */
   } msg;
 };
 
@@ -160,10 +163,14 @@ void do_shutdown        ( struct api_msg_msg *msg);
 #if LWIP_IGMP
 void do_join_leave_group( struct api_msg_msg *msg);
 #endif /* LWIP_IGMP */
+#ifdef SCION
+void do_set_path        ( struct api_msg_msg *msg);
+#endif /* SCION */
 
 #if LWIP_DNS
 void do_gethostbyname(void *arg);
 #endif /* LWIP_DNS */
+
 
 struct netconn* netconn_alloc(enum netconn_type t, netconn_callback callback);
 void netconn_free(struct netconn *conn);

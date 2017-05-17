@@ -253,6 +253,11 @@ err_t   netconn_join_leave_group(struct netconn *conn, ip_addr_t *multiaddr,
 err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #endif /* LWIP_DNS */
 
+#ifdef SCION
+err_t   netconn_set_path(struct netconn *conn, spath_t *path);
+#endif /* SCION */
+
+
 #define netconn_err(conn)               ((conn)->last_err)
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
 

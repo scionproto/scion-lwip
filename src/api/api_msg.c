@@ -1562,4 +1562,23 @@ do_gethostbyname(void *arg)
 }
 #endif /* LWIP_DNS */
 
+#ifdef SCION
+/**
+ * Set a SCION path for a TCP connection.
+ *
+ * @param msg the api_msg_msg pointing to the connection.
+ */
+void
+do_set_path(struct api_msg_msg *msg)
+{
+  if ((msg->conn->pcb.tcp != NULL) && (msg->conn->type == NETCONN_TCP)) {
+      scion_copy_path(msg->conn->pcb.ip->path, msg->msg.path);
+      msg->err = ERR_OK;
+  } else {
+      msg->err = ERR_ARG;
+  }
+  TCPIP_APIMSG_ACK(msg);
+}
+#endif /* SCION */
+
 #endif /* LWIP_NETCONN */

@@ -564,11 +564,10 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
 #ifdef SCION
     spath_t *path = malloc(sizeof *path);
-    path->raw_path = malloc(current_path.len);
-    memcpy(path->raw_path, current_path.raw_path, current_path.len);
-    path->len = current_path.len;
+    path->raw_path = NULL;
+    path->len = 0;
+    scion_copy_path(path, &current_path);
     npcb->path = path;
-    memcpy(&npcb->path->first_hop, &current_path.first_hop, sizeof(HostAddr));
     /* TODO(PSz): it makes sense to put MTU within spath_t. */
 #endif
 
