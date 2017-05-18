@@ -783,7 +783,7 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
  *
  * @param conn the netconn to update the path
  * @param path the SCION path to be used by the connection
- * @return ERR_OK if bound, any other err_t on failure
+ * @return ERR_ARG for a non-TCP netconn, ERR_OK otherwise
  */
 err_t
 netconn_set_path(struct netconn *conn, spath_t *path)
