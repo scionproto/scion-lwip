@@ -189,6 +189,6 @@ void scion_copy_path(spath_t *old, const spath_t *new){
         old->raw_path = malloc(new->len);
     }
     memcpy(old->raw_path, new->raw_path, new->len);
-    old->len = current_path.len;
+    old->len = new->len;
     memcpy(&old->first_hop, &new->first_hop, sizeof(HostAddr));
 }

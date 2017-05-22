@@ -652,6 +652,12 @@ tcp_process(struct tcp_pcb *pcb)
 
   err = ERR_OK;
 
+#ifdef SCION
+  if (pcb->path->len != current_path.len || memcmp(pcb->path->raw_path,
+                                                   current_path.raw_path, current_path.len))
+      scion_copy_path(pcb->path, &current_path);
+#endif
+
   /* Process incoming RST segments. */
   if (flags & TCP_RST) {
     /* First, determine if the reset is acceptable. */
