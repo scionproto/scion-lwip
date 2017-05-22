@@ -171,7 +171,6 @@ void do_set_path        ( struct api_msg_msg *msg);
 void do_gethostbyname(void *arg);
 #endif /* LWIP_DNS */
 
-
 struct netconn* netconn_alloc(enum netconn_type t, netconn_callback callback);
 void netconn_free(struct netconn *conn);
 
