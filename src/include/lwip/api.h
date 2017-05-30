@@ -257,7 +257,6 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 err_t   netconn_set_path(struct netconn *conn, spath_t *path);
 #endif /* SCION */
 
-
 #define netconn_err(conn)               ((conn)->last_err)
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
 
