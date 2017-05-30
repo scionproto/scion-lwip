@@ -654,7 +654,7 @@ tcp_process(struct tcp_pcb *pcb)
 
 #ifdef SCION
   /* TODO(PSz): for now the policy is to just use a new path. More sophisticated policies
-   * can be implemented in the future (e.g., only server updates path, etc...). */
+   * can be implemented in the future (e.g., only client updates path, etc...). */
   if (pcb->path->len != current_path.len || memcmp(pcb->path->raw_path,
                                                    current_path.raw_path, current_path.len))
       scion_copy_path(pcb->path, &current_path);
