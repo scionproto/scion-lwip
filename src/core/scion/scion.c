@@ -179,3 +179,15 @@ inet_chksum_pseudo_partial(struct pbuf *p,
 {
     return inet_chksum_pseudo(p, src, dest, proto, proto_len);
 }
+
+void scion_copy_path(spath_t *old, const spath_t *new){
+    // Don't allocate if unnecessary
+    if (old->len < new->len){
+        if (old->raw_path != NULL)
+            free(old->raw_path);
+        old->raw_path = malloc(new->len);
+    }
+    memcpy(old->raw_path, new->raw_path, new->len);
+    old->len = new->len;
+    memcpy(&old->first_hop, &new->first_hop, sizeof(HostAddr));
+}

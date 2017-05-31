@@ -777,4 +777,30 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
 }
 #endif /* LWIP_DNS*/
 
+#ifdef SCION
+/**
+ * Sets (updates) the SCION path for the connection.
+ *
+ * @param conn the netconn to update the path
+ * @param path the SCION path to be used by the connection
+ * @return ERR_ARG for a non-TCP netconn, ERR_OK otherwise
+ */
+err_t
+netconn_set_path(struct netconn *conn, spath_t *path)
+{
+  struct api_msg msg;
+  err_t err;
+
+  LWIP_ERROR("netconn_set_path: invalid conn", (conn != NULL), return ERR_ARG;);
+
+  msg.function = do_set_path;
+  msg.msg.conn = conn;
+  msg.msg.msg.path = path;
+  err = TCPIP_APIMSG(&msg);
+
+  NETCONN_SET_SAFE_ERR(conn, err);
+  return err;
+}
+#endif /* SCION */
+
 #endif /* LWIP_NETCONN */

@@ -564,11 +564,10 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
 #ifdef SCION
     spath_t *path = malloc(sizeof *path);
-    path->raw_path = malloc(current_path.len);
-    memcpy(path->raw_path, current_path.raw_path, current_path.len);
-    path->len = current_path.len;
+    path->raw_path = NULL;
+    path->len = 0;
+    scion_copy_path(path, &current_path);
     npcb->path = path;
-    memcpy(&npcb->path->first_hop, &current_path.first_hop, sizeof(HostAddr));
     /* TODO(PSz): it makes sense to put MTU within spath_t. */
 #endif
 
@@ -652,6 +651,14 @@ tcp_process(struct tcp_pcb *pcb)
   err_t err;
 
   err = ERR_OK;
+
+#ifdef SCION
+  /* TODO(PSz): for now the policy is to just use a new path. More sophisticated policies
+   * can be implemented in the future (e.g., only client updates path, etc...). */
+  if (pcb->path->len != current_path.len || memcmp(pcb->path->raw_path,
+                                                   current_path.raw_path, current_path.len))
+      scion_copy_path(pcb->path, &current_path);
+#endif
 
   /* Process incoming RST segments. */
   if (flags & TCP_RST) {

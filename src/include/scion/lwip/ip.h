@@ -141,6 +141,7 @@ err_t scion_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 /** Pointer to the output function. Set by the dispatcher. */
 int (*tcp_scion_output)(uint8_t *, int, HostAddr *);
 
+void scion_copy_path(spath_t *old, const spath_t *new);
 #ifdef __cplusplus
 }
 #endif
