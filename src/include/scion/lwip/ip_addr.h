@@ -20,7 +20,7 @@
 #include <string.h>
 #include "lwip/opt.h"
 #include "lwip/def.h"
-#include "libscion/address.h"
+#include "scion/address.h"
 
 
 #ifdef __cplusplus

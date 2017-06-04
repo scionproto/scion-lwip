@@ -29,7 +29,7 @@
 #include "lwip/stats.h"
 #include "arch/perf.h"
 #include "lwip/tcpip.h"
-#include "libscion/scion.h"
+#include "scion/scion.h"
 
 /* Source SCION address of current_header */
 ip_addr_t current_iphdr_src;
