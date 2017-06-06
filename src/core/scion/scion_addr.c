@@ -25,8 +25,10 @@ void scion_addr_from_raw(saddr_t *addr, u8_t type, const char *raw_addr){
 void scion_addr_set(saddr_t *dst, const saddr_t *src){
     if (src == NULL)
         dst->type = ANY_ADDR_TYPE;
-    else
-        memcpy(dst, src, sizeof(saddr_t));
+    else{
+        dst->type = src->type;
+        memcpy(dst->addr, src->addr, ISD_AS_LEN + get_addr_len(dst->type));
+    }
 }
 
 void scion_addr_set_any(saddr_t *addr){
