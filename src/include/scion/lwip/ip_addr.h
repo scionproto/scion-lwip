@@ -33,7 +33,7 @@ extern "C" {
 
 typedef saddr_t ip_addr_t;
 
-void scion_addr_from_raw(saddr_t *, u8_t, const char *);
+int scion_addr_from_raw(saddr_t *, u8_t, const char *, int);
 #define ip_addr_set(a, b) scion_addr_set(a, b)
 #define ip_addr_copy(a, b) scion_addr_set(&a, &b)
 void scion_addr_set(saddr_t *dst, const saddr_t *src);

@@ -13,13 +13,21 @@
  *   See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+#include <assert.h>
 #include "lwip/ip_addr.h"
 
-void scion_addr_from_raw(saddr_t *addr, u8_t type, const char *raw_addr){
-    /* TODO: add some sanity checks */
+int scion_addr_from_raw(saddr_t *addr, u8_t type, const char *raw_addr, int raw_addr_len){
+    if (!(type < ADDR_TYPE_N)) {
+        return -1;
+    }
     addr->type = type;
-    int len = get_addr_len(type);
-    memcpy(addr->addr, raw_addr, ISD_AS_LEN + len);
+    int len = ISD_AS_LEN + get_addr_len(type);
+    if (len != raw_addr_len) {
+        // Expected len from address type does not match actual address len
+        return -1;
+    }
+    memcpy(addr->addr, raw_addr, len);
+    return 0;
 }
 
 void scion_addr_set(saddr_t *dst, const saddr_t *src){
